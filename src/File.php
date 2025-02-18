@@ -18,6 +18,7 @@ use RecursiveIteratorIterator;
 use RuntimeException;
 use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\Mime\MimeTypes;
+use Throwable;
 use ZipArchive;
 use ZipStream\ZipStream;
 
@@ -36,6 +37,92 @@ use ZipStream\ZipStream;
  */
 final class File
 {
+    /**
+     * Writes content to a file atomically using a temporary file and rename
+     * operation.
+     *
+     * This method ensures that file writing is atomic by:
+     *
+     *   1. Creating a temporary file in the same directory as the target file.
+     *   2. Writing the content to the temporary file.
+     *   3. Using rename() to atomically replace the target file.
+     *
+     * The atomic operation guarantees that:
+     *
+     *   - Other processes will see either the old file or the new file, never a
+     *     partially written file.
+     *   - If the process is interrupted, the original file remains intact.
+     *   - Race conditions between multiple processes are handled safely.
+     *
+     * @param string $targetFile The path to the file where content should be written.
+     * @param string $content The content to write to the file.
+     * @param int $permissions Optional file permissions (default: 0666 & ~umask()).
+     *
+     * @throws RuntimeException If directory creation fails.
+     * @throws RuntimeException If temporary file creation fails.
+     * @throws RuntimeException If file writing fails.
+     * @throws RuntimeException If file renaming fails.
+     */
+    public static function write(
+        string $targetFile,
+        string $content,
+        ?int $permissions = null
+    ): void {
+        // Ensure target directory exists.
+        $directory = dirname($targetFile);
+        if (!is_dir($directory)) {
+            if (false === @mkdir($directory, 0777, true) && !is_dir($directory)) {
+                throw new RuntimeException(sprintf(
+                    'Unable to create directory (%s).',
+                    $directory
+                ));
+            }
+        }
+
+        // Create temporary file in the same directory.
+        $tempFile = tempnam($directory, basename($targetFile));
+        if (false === $tempFile) {
+            throw new RuntimeException(sprintf(
+                'Unable to create temporary file in directory (%s).',
+                $directory
+            ));
+        }
+
+        try {
+            // Write content to temporary file.
+            if (false === file_put_contents($tempFile, $content)) {
+                throw new RuntimeException(sprintf(
+                    'Unable to write content to temporary file (%s).',
+                    $tempFile
+                ));
+            }
+
+            // Set file permissions if specified.
+            if ($permissions !== null) {
+                if (!@chmod($tempFile, $permissions)) {
+                    throw new RuntimeException(sprintf(
+                        'Unable to set permissions on temporary file (%s).',
+                        $tempFile
+                    ));
+                }
+            } else {
+                @chmod($tempFile, 0666 & ~umask());
+            }
+
+            // Perform atomic rename operation.
+            if (!@rename($tempFile, $targetFile)) {
+                throw new RuntimeException(sprintf(
+                    'Unable to move temporary file to target location (%s).',
+                    $targetFile
+                ));
+            }
+        } catch (Throwable $e) {
+            // Clean up temporary file if anything goes wrong.
+            @unlink($tempFile);
+            throw $e;
+        }
+    }
+
     /**
      * Recursively removes a directory and its contents.
      *
