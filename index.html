@@ -1,1 +1,148 @@
-Soon.
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Derafu: Project - Slogan</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.0/css/all.min.css" />
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/github-markdown-css/5.1.0/github-markdown-light.min.css" rel="stylesheet" />
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.28.0/themes/prism.min.css" rel="stylesheet" />
+    <link href="https://derafu.org/foundation/css/styles.min.css" rel="stylesheet" />
+    </head>
+<body class="derafu-theme-earthstone">
+                <div id="header-container" class="sticky-top"></div>
+    
+            <main>
+            <div class="container py-4">
+    <div class="markdown-body"><h1><a id="content-derafu-support---essential-php-utilities" href="index.html#content-derafu-support---essential-php-utilities" class="text-decoration-none small text-muted" aria-hidden="true" title="Permalink"><i class="fa-solid fa-link"></i> </a>Derafu: Support - Essential PHP Utilities</h1>
+<p><a rel="nofollow noopener noreferrer" target="_blank" class="external-link" href="https://github.com/derafu/support/actions/workflows/ci.yml?query=branch%3Amain"><img src="https://github.com/derafu/support/actions/workflows/ci.yml/badge.svg?branch=main&amp;event=push" alt="CI Workflow" /></a>
+<a rel="nofollow noopener noreferrer" target="_blank" class="external-link" href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="License" /></a></p>
+<p>A collection of essential PHP utility classes that provide common functionality for string manipulation, array handling, file operations, date management, and more.</p>
+<h2><a id="content-features" href="index.html#content-features" class="text-decoration-none small text-muted" aria-hidden="true" title="Permalink"><i class="fa-solid fa-link"></i> </a>Features</h2>
+<ul>
+<li>🔡 String manipulation utilities.</li>
+<li>📚 Array handling helpers.</li>
+<li>📅 Date and time management.</li>
+<li>📂 File system operations.</li>
+<li>📝 CSV file handling.</li>
+<li>🔧 Object manipulation tools.</li>
+<li>🐛 Debugging utilities.</li>
+<li>🏭 Object factory and hydration.</li>
+<li>🔄 Data serialization helpers.</li>
+<li>🧪 Comprehensive test coverage.</li>
+</ul>
+<h2><a id="content-why-derafusupport" href="index.html#content-why-derafusupport" class="text-decoration-none small text-muted" aria-hidden="true" title="Permalink"><i class="fa-solid fa-link"></i> </a>Why Derafu\Support?</h2>
+<p>This package focuses on solving specific business and data processing needs that are often overlooked by standard PHP utilities:</p>
+<ul>
+<li><strong>Business Date Handling</strong>: Working days calculation, fiscal period management, and date ranges that understand holidays and weekends.</li>
+<li><strong>Robust CSV Processing</strong>: Consistent handling of different encodings, separators, and quote styles across systems.</li>
+<li><strong>Practical Data Transformations</strong>: Convert between different data structures (trees, tables, lists) while preserving data integrity.</li>
+<li><strong>Real-world File Operations</strong>: Safe file handling with proper error management and automatic MIME type detection.</li>
+</ul>
+<p>If your application deals with business dates, data processing, or file management, these utilities can save you from reinventing common solutions.</p>
+<h2><a id="content-installation" href="index.html#content-installation" class="text-decoration-none small text-muted" aria-hidden="true" title="Permalink"><i class="fa-solid fa-link"></i> </a>Installation</h2>
+<p>Install via Composer:</p>
+<pre><code class="language-bash">composer require derafu/support
+</code></pre>
+<h2><a id="content-usage-examples" href="index.html#content-usage-examples" class="text-decoration-none small text-muted" aria-hidden="true" title="Permalink"><i class="fa-solid fa-link"></i> </a>Usage Examples</h2>
+<h3><a id="content-string-manipulation-str" href="index.html#content-string-manipulation-str" class="text-decoration-none small text-muted" aria-hidden="true" title="Permalink"><i class="fa-solid fa-link"></i> </a>String Manipulation (Str)</h3>
+<pre><code class="language-php">use Derafu\Support\Str;
+
+// Generate UUID.
+$uuid = Str::uuid4();
+
+// Replace placeholders.
+$result = Str::format('Hello {{name}}!', ['name' =&gt; 'John']);
+
+// Normalize strings for URLs.
+$slug = Str::slug('Hello World!'); // &quot;hello-world&quot;.
+</code></pre>
+<h3><a id="content-array-handling-arr" href="index.html#content-array-handling-arr" class="text-decoration-none small text-muted" aria-hidden="true" title="Permalink"><i class="fa-solid fa-link"></i> </a>Array Handling (Arr)</h3>
+<pre><code class="language-php">use Derafu\Support\Arr;
+
+// Auto-cast array values.
+$result = Arr::cast($array);
+
+// Convert array to tree structure.
+$tree = Arr::toTree($items, 'parent_id', 'children');
+</code></pre>
+<h3><a id="content-date-management-date" href="index.html#content-date-management-date" class="text-decoration-none small text-muted" aria-hidden="true" title="Permalink"><i class="fa-solid fa-link"></i> </a>Date Management (Date)</h3>
+<pre><code class="language-php">use Derafu\Support\Date;
+
+// Add working days.
+$newDate = Date::addWorkingDays('2024-01-15', 5, $holidays);
+
+// Format date in Spanish.
+$formatted = Date::formatSpanish('2024-01-15'); // &quot;Lunes, 15 de enero del 2024&quot;.
+
+// Calculate periods
+$nextPeriod = Date::nextPeriod(202401); // 202402.
+</code></pre>
+<h3><a id="content-file-operations-file" href="index.html#content-file-operations-file" class="text-decoration-none small text-muted" aria-hidden="true" title="Permalink"><i class="fa-solid fa-link"></i> </a>File Operations (File)</h3>
+<pre><code class="language-php">use Derafu\Support\File;
+
+// Get file MIME type.
+$mime = File::mimetype('document.pdf');
+
+// Compress directory.
+File::compress('/path/to/dir');
+
+// Send file through browser.
+File::send('document.pdf');
+</code></pre>
+<h3><a id="content-csv-handling-csv" href="index.html#content-csv-handling-csv" class="text-decoration-none small text-muted" aria-hidden="true" title="Permalink"><i class="fa-solid fa-link"></i> </a>CSV Handling (Csv)</h3>
+<pre><code class="language-php">use Derafu\Support\Csv;
+
+// Read CSV file.
+$data = Csv::read('file.csv', ';');
+
+// Generate CSV content.
+$csvString = Csv::generate($data);
+
+// Send CSV as download.
+Csv::send($data, 'export.csv');
+</code></pre>
+<h3><a id="content-object-manipulation-obj" href="index.html#content-object-manipulation-obj" class="text-decoration-none small text-muted" aria-hidden="true" title="Permalink"><i class="fa-solid fa-link"></i> </a>Object Manipulation (Obj)</h3>
+<pre><code class="language-php">use Derafu\Support\Obj;
+
+// Fill object properties.
+$object = Obj::fill($instance, $data);
+
+// Get public properties.
+$properties = Obj::getPublicProperties($instance);
+</code></pre>
+<h3><a id="content-object-factory-and-hydration" href="index.html#content-object-factory-and-hydration" class="text-decoration-none small text-muted" aria-hidden="true" title="Permalink"><i class="fa-solid fa-link"></i> </a>Object Factory and Hydration</h3>
+<pre><code class="language-php">use Derafu\Support\Factory;
+use Derafu\Support\Hydrator;
+
+// Create and hydrate objects.
+$instance = Factory::create($data, MyClass::class);
+
+// Hydrate existing instance.
+$hydrated = Hydrator::hydrate($instance, $data);
+</code></pre>
+<h3><a id="content-debug-utilities" href="index.html#content-debug-utilities" class="text-decoration-none small text-muted" aria-hidden="true" title="Permalink"><i class="fa-solid fa-link"></i> </a>Debug Utilities</h3>
+<pre><code class="language-php">use Derafu\Support\Debug;
+
+// Inspect variable.
+$info = Debug::inspect($var, 'myVar');
+
+// Print debug information.
+Debug::print($var);
+</code></pre>
+<h2><a id="content-contributing" href="index.html#content-contributing" class="text-decoration-none small text-muted" aria-hidden="true" title="Permalink"><i class="fa-solid fa-link"></i> </a>Contributing</h2>
+<p>Contributions are welcome! Please feel free to submit a Pull Request. For major changes, please open an issue first to discuss what you would like to change.</p>
+<h2><a id="content-license" href="index.html#content-license" class="text-decoration-none small text-muted" aria-hidden="true" title="Permalink"><i class="fa-solid fa-link"></i> </a>License</h2>
+<p>This package is open-sourced software licensed under the <a rel="nofollow noopener noreferrer" target="_blank" class="external-link" href="https://opensource.org/licenses/MIT">MIT license</a>.</p>
+</div>
+</div>
+        </main>
+    
+            <div id="footer-container"></div>
+<script src="https://derafu.org/foundation/js/derafu.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.28.0/components/prism-core.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.28.0/plugins/autoloader/prism-autoloader.min.js"></script>
+    </body>
+</html>
