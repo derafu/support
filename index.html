@@ -7,7 +7,11 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.0/css/all.min.css" />
     <link href="https://cdnjs.cloudflare.com/ajax/libs/github-markdown-css/5.1.0/github-markdown-light.min.css" rel="stylesheet" />
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.28.0/themes/prism.min.css" rel="stylesheet" />
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism.min.css" rel="stylesheet" />
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/toolbar/prism-toolbar.min.css" rel="stylesheet" />
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/line-numbers/prism-line-numbers.min.css" rel="stylesheet" />
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/command-line/prism-command-line.min.css" rel="stylesheet" />
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/match-braces/prism-match-braces.min.css" rel="stylesheet" />
     <link href="https://derafu.org/foundation/css/styles.min.css" rel="stylesheet" />
     </head>
 <body class="derafu-theme-earthstone">
@@ -43,11 +47,11 @@
 <p>If your application deals with business dates, data processing, or file management, these utilities can save you from reinventing common solutions.</p>
 <h2><a id="content-installation" href="index.html#content-installation" class="text-decoration-none small text-muted" aria-hidden="true" title="Permalink"><i class="fa-solid fa-link"></i> </a>Installation</h2>
 <p>Install via Composer:</p>
-<pre><code class="language-bash">composer require derafu/support
+<pre><code class="line-numbers match-braces language-bash">composer require derafu/support
 </code></pre>
 <h2><a id="content-usage-examples" href="index.html#content-usage-examples" class="text-decoration-none small text-muted" aria-hidden="true" title="Permalink"><i class="fa-solid fa-link"></i> </a>Usage Examples</h2>
 <h3><a id="content-string-manipulation-str" href="index.html#content-string-manipulation-str" class="text-decoration-none small text-muted" aria-hidden="true" title="Permalink"><i class="fa-solid fa-link"></i> </a>String Manipulation (Str)</h3>
-<pre><code class="language-php">use Derafu\Support\Str;
+<pre><code class="line-numbers match-braces language-php">use Derafu\Support\Str;
 
 // Generate UUID.
 $uuid = Str::uuid4();
@@ -59,7 +63,7 @@ $result = Str::format('Hello {{name}}!', ['name' =&gt; 'John']);
 $slug = Str::slug('Hello World!'); // &quot;hello-world&quot;.
 </code></pre>
 <h3><a id="content-array-handling-arr" href="index.html#content-array-handling-arr" class="text-decoration-none small text-muted" aria-hidden="true" title="Permalink"><i class="fa-solid fa-link"></i> </a>Array Handling (Arr)</h3>
-<pre><code class="language-php">use Derafu\Support\Arr;
+<pre><code class="line-numbers match-braces language-php">use Derafu\Support\Arr;
 
 // Auto-cast array values.
 $result = Arr::cast($array);
@@ -68,7 +72,7 @@ $result = Arr::cast($array);
 $tree = Arr::toTree($items, 'parent_id', 'children');
 </code></pre>
 <h3><a id="content-date-management-date" href="index.html#content-date-management-date" class="text-decoration-none small text-muted" aria-hidden="true" title="Permalink"><i class="fa-solid fa-link"></i> </a>Date Management (Date)</h3>
-<pre><code class="language-php">use Derafu\Support\Date;
+<pre><code class="line-numbers match-braces language-php">use Derafu\Support\Date;
 
 // Add working days.
 $newDate = Date::addWorkingDays('2024-01-15', 5, $holidays);
@@ -80,7 +84,7 @@ $formatted = Date::formatSpanish('2024-01-15'); // &quot;Lunes, 15 de enero del 
 $nextPeriod = Date::nextPeriod(202401); // 202402.
 </code></pre>
 <h3><a id="content-file-operations-file" href="index.html#content-file-operations-file" class="text-decoration-none small text-muted" aria-hidden="true" title="Permalink"><i class="fa-solid fa-link"></i> </a>File Operations (File)</h3>
-<pre><code class="language-php">use Derafu\Support\File;
+<pre><code class="line-numbers match-braces language-php">use Derafu\Support\File;
 
 // Get file MIME type.
 $mime = File::mimetype('document.pdf');
@@ -92,7 +96,7 @@ File::compress('/path/to/dir');
 File::send('document.pdf');
 </code></pre>
 <h3><a id="content-csv-handling-csv" href="index.html#content-csv-handling-csv" class="text-decoration-none small text-muted" aria-hidden="true" title="Permalink"><i class="fa-solid fa-link"></i> </a>CSV Handling (Csv)</h3>
-<pre><code class="language-php">use Derafu\Support\Csv;
+<pre><code class="line-numbers match-braces language-php">use Derafu\Support\Csv;
 
 // Read CSV file.
 $data = Csv::read('file.csv', ';');
@@ -104,7 +108,7 @@ $csvString = Csv::generate($data);
 Csv::send($data, 'export.csv');
 </code></pre>
 <h3><a id="content-object-manipulation-obj" href="index.html#content-object-manipulation-obj" class="text-decoration-none small text-muted" aria-hidden="true" title="Permalink"><i class="fa-solid fa-link"></i> </a>Object Manipulation (Obj)</h3>
-<pre><code class="language-php">use Derafu\Support\Obj;
+<pre><code class="line-numbers match-braces language-php">use Derafu\Support\Obj;
 
 // Fill object properties.
 $object = Obj::fill($instance, $data);
@@ -113,7 +117,7 @@ $object = Obj::fill($instance, $data);
 $properties = Obj::getPublicProperties($instance);
 </code></pre>
 <h3><a id="content-object-factory-and-hydration" href="index.html#content-object-factory-and-hydration" class="text-decoration-none small text-muted" aria-hidden="true" title="Permalink"><i class="fa-solid fa-link"></i> </a>Object Factory and Hydration</h3>
-<pre><code class="language-php">use Derafu\Support\Factory;
+<pre><code class="line-numbers match-braces language-php">use Derafu\Support\Factory;
 use Derafu\Support\Hydrator;
 
 // Create and hydrate objects.
@@ -123,7 +127,7 @@ $instance = Factory::create($data, MyClass::class);
 $hydrated = Hydrator::hydrate($instance, $data);
 </code></pre>
 <h3><a id="content-debug-utilities" href="index.html#content-debug-utilities" class="text-decoration-none small text-muted" aria-hidden="true" title="Permalink"><i class="fa-solid fa-link"></i> </a>Debug Utilities</h3>
-<pre><code class="language-php">use Derafu\Support\Debug;
+<pre><code class="line-numbers match-braces language-php">use Derafu\Support\Debug;
 
 // Inspect variable.
 $info = Debug::inspect($var, 'myVar');
@@ -142,7 +146,13 @@ Debug::print($var);
             <div id="footer-container"></div>
 <script src="https://derafu.org/foundation/js/derafu.js"></script>
         <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.28.0/components/prism-core.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.28.0/plugins/autoloader/prism-autoloader.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-core.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/autoloader/prism-autoloader.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/line-numbers/prism-line-numbers.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/toolbar/prism-toolbar.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/copy-to-clipboard/prism-copy-to-clipboard.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/show-language/prism-show-language.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/command-line/prism-command-line.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/match-braces/prism-match-braces.min.js"></script>
     </body>
 </html>
