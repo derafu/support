@@ -1,12 +1,17 @@
 # Derafu: Support - Essential PHP Utilities
 
-[![CI Workflow](https://github.com/derafu/support/actions/workflows/ci.yml/badge.svg?branch=main&event=push)](https://github.com/derafu/support/actions/workflows/ci.yml?query=branch%3Amain)
-[![License](https://img.shields.io/badge/license-MIT-blue.svg)](https://opensource.org/licenses/MIT)
+![GitHub last commit](https://img.shields.io/github/last-commit/derafu/support/main)
+![CI Workflow](https://github.com/derafu/support/actions/workflows/ci.yml/badge.svg?branch=main&event=push)
+![GitHub code size in bytes](https://img.shields.io/github/languages/code-size/derafu/support)
+![GitHub Issues](https://img.shields.io/github/issues-raw/derafu/support)
+![Total Downloads](https://poser.pugx.org/derafu/support/downloads)
+![Monthly Downloads](https://poser.pugx.org/derafu/support/d/monthly)
 
 A collection of essential PHP utility classes that provide common functionality for string manipulation, array handling, file operations, date management, and more.
 
 ## Features
 
+{.list-unstyled}
 - 🔡 String manipulation utilities.
 - 📚 Array handling helpers.
 - 📅 Date and time management.
