@@ -5,7 +5,7 @@ declare(strict_types=1);
 /**
  * Derafu: Support - Essential PHP Utilities.
  *
- * Copyright (c) 2025 Esteban De La Fuente Rubio / Derafu <https://www.derafu.org>
+ * Copyright (c) 2025 Esteban De La Fuente Rubio / Derafu <https://www.derafu.dev>
  * Licensed under the MIT License.
  * See LICENSE file for more details.
  */
@@ -352,7 +352,6 @@ final class Str
 
         $result = mb_convert_encoding($string, 'ISO-8859-1', 'UTF-8');
 
-        /** @phpstan-ignore-next-line */
         return $result !== false ? $result : $string;
     }
 
@@ -372,7 +371,6 @@ final class Str
 
         $result = mb_convert_encoding($string, 'UTF-8', 'ISO-8859-1');
 
-        /** @phpstan-ignore-next-line */
         return $result !== false ? $result : $string;
     }
 

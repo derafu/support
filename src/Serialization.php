@@ -5,7 +5,7 @@ declare(strict_types=1);
 /**
  * Derafu: Support - Essential PHP Utilities.
  *
- * Copyright (c) 2025 Esteban De La Fuente Rubio / Derafu <https://www.derafu.org>
+ * Copyright (c) 2025 Esteban De La Fuente Rubio / Derafu <https://www.derafu.dev>
  * Licensed under the MIT License.
  * See LICENSE file for more details.
  */
@@ -54,20 +54,18 @@ final class Serialization
             return true;
         }
 
-        if (!preg_match('/^([adObis]):/', $data, $matches)) {
-            return false;
-        }
-
-        switch ($matches[1]) {
-            case 'a':
-            case 'O':
-                return (bool)preg_match("/^{$matches[1]}:[0-9]+:/s", $data);
-            case 's':
-                return (bool)preg_match("/^{$matches[1]}:[0-9]+:\".*\";$/s", $data);
-            case 'b':
-            case 'i':
-            case 'd':
-                return (bool)preg_match("/^{$matches[1]}:[0-9.E-]+;$/", $data);
+        if (preg_match('/^([adObis]):/', $data, $matches)) {
+            switch ($matches[1]) {
+                case 'a':
+                case 'O':
+                    return (bool)preg_match("/^{$matches[1]}:[0-9]+:/s", $data);
+                case 's':
+                    return (bool)preg_match("/^{$matches[1]}:[0-9]+:\".*\";$/s", $data);
+                case 'b':
+                case 'i':
+                case 'd':
+                    return (bool)preg_match("/^{$matches[1]}:[0-9.E-]+;$/", $data);
+            }
         }
 
         return false;
