@@ -48,6 +48,37 @@ final class Arr
     }
 
     /**
+     * Converts a flat array with dot notation keys back to a multi-dimensional
+     * array.
+     *
+     * @param array $array The flat array with dot notation keys.
+     * @return array The multi-dimensional array.
+     */
+    public static function nested(array $array): array
+    {
+        $result = [];
+        foreach ($array as $key => $value) {
+            if (str_contains($key, '.')) {
+                $keys = explode('.', $key);
+                $current = &$result;
+
+                foreach ($keys as $k) {
+                    if (!isset($current[$k]) || !is_array($current[$k])) {
+                        $current[$k] = [];
+                    }
+                    $current = &$current[$k];
+                }
+
+                $current = $value;
+            } else {
+                $result[$key] = $value;
+            }
+        }
+
+        return $result;
+    }
+
+    /**
      * Recursively casts array values automatically based on their content.
      *
      * Rules applied:
