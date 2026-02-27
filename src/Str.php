@@ -352,7 +352,8 @@ final class Str
 
         $result = mb_convert_encoding($string, 'ISO-8859-1', 'UTF-8');
 
-        return $result !== false ? $result : $string;
+        // $result always is a string. Maybe just return $result in the future.
+        return $result ?: $string;
     }
 
     /**
@@ -371,7 +372,8 @@ final class Str
 
         $result = mb_convert_encoding($string, 'UTF-8', 'ISO-8859-1');
 
-        return $result !== false ? $result : $string;
+        // $result always is a string. Maybe just return $result in the future.
+        return $result ?: $string;
     }
 
     /**

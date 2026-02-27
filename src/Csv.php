@@ -51,7 +51,7 @@ final class Csv
                 $content = mb_convert_encoding($content, 'UTF-8', $encoding);
             }
 
-            $csv = Reader::createFromString($content);
+            $csv = Reader::fromString($content);
             $csv->setDelimiter($separator);
             $csv->setEnclosure($enclosure);
             $csv->setEscape($escape);
@@ -153,7 +153,7 @@ final class Csv
         string $encoding = 'UTF-8'
     ): string {
         try {
-            $csv = Writer::createFromString('');
+            $csv = Writer::fromString('');
             $csv->setDelimiter($separator);
             $csv->setEnclosure($enclosure);
             $csv->setEscape($escape);

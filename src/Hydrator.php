@@ -92,7 +92,6 @@ final class Hydrator
         // Try direct property assignment.
         if ($reflection->hasProperty($attribute)) {
             $property = $reflection->getProperty($attribute);
-            $property->setAccessible(true);
             $property->setValue($instance, $value);
             return true;
         }

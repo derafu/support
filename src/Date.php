@@ -255,10 +255,11 @@ final class Date
     ): ?string {
         try {
             $carbonDate = Carbon::createFromFormat('Y-m-d', $date);
+            $lastErrors = $carbonDate->getLastErrors();
 
             if (!$carbonDate instanceof Carbon ||
                 $carbonDate->format('Y-m-d') !== $date ||
-                $carbonDate->getLastErrors()['error_count'] > 0) {
+                ($lastErrors !== false && $lastErrors['error_count'] > 0)) {
                 return null;
             }
 

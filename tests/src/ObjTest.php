@@ -42,7 +42,6 @@ class ObjTest extends TestCase
         // Private property should remain unchanged
         $reflection = new ReflectionClass($result);
         $property = $reflection->getProperty('privateProperty');
-        $property->setAccessible(true);
         $this->assertSame('private', $property->getValue($result));
     }
 
