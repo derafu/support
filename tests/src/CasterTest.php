@@ -118,7 +118,6 @@ class CasterTest extends TestCase
             'yes uppercase'  => ['YES'],
             'on lowercase'   => ['on'],
             'on uppercase'   => ['ON'],
-            'one string'     => ['1'],
             'true with spaces' => ['  true  '],
         ];
     }
@@ -140,7 +139,6 @@ class CasterTest extends TestCase
             'no uppercase'    => ['NO'],
             'off lowercase'   => ['off'],
             'off uppercase'   => ['OFF'],
-            'zero string'     => ['0'],
             'false with spaces' => ['  false  '],
         ];
     }

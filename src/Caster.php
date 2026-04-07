@@ -122,9 +122,9 @@ final class Caster
     private static function parseBool(string $v): ?bool
     {
         return match (strtolower($v)) {
-            'true',  'yes', 'on',  '1' => true,
-            'false', 'no',  'off', '0' => false,
-            default                    => null,
+            'true',  'yes', 'on'  => true,
+            'false', 'no',  'off' => false,
+            default               => null,
         };
     }
 
