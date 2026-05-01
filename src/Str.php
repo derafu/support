@@ -337,46 +337,6 @@ final class Str
     }
 
     /**
-     * Converts a string from UTF-8 to ISO-8859-1.
-     *
-     * Only converts if the input string is actually UTF-8 encoded.
-     *
-     * @param string $string The string to convert.
-     * @return string The converted string or original if conversion not possible.
-     */
-    public static function utf8decode(string $string): string
-    {
-        if (empty($string) || !mb_detect_encoding($string, 'UTF-8', true)) {
-            return $string;
-        }
-
-        $result = mb_convert_encoding($string, 'ISO-8859-1', 'UTF-8');
-
-        // $result always is a string. Maybe just return $result in the future.
-        return $result ?: $string;
-    }
-
-    /**
-     * Converts a string from ISO-8859-1 to UTF-8.
-     *
-     * Only converts if the input string is actually ISO-8859-1 encoded.
-     *
-     * @param string $string The string to convert.
-     * @return string The converted string or original if conversion not possible.
-     */
-    public static function utf8encode(string $string): string
-    {
-        if (empty($string) || !mb_detect_encoding($string, 'ISO-8859-1', true)) {
-            return $string;
-        }
-
-        $result = mb_convert_encoding($string, 'UTF-8', 'ISO-8859-1');
-
-        // $result always is a string. Maybe just return $result in the future.
-        return $result ?: $string;
-    }
-
-    /**
      * Generates a UUID v4 with RFC 4122 variant.
      *
      * @return string The generated UUID.
@@ -447,5 +407,31 @@ final class Str
         shuffle($requiredChars);
 
         return mb_substr(implode('', $requiredChars), 0, $length);
+    }
+
+    /**
+     * Converts a string from UTF-8 to ISO-8859-1.
+     *
+     * Only converts if the input string is actually UTF-8 encoded.
+     *
+     * @param string $input The string to convert.
+     * @return string The converted string or original if conversion not possible.
+     */
+    public static function utf8decode(string $input): string
+    {
+        return Encoding::utf8decode($input);
+    }
+
+    /**
+     * Converts a string from ISO-8859-1 to UTF-8.
+     *
+     * Only converts if the input string is actually ISO-8859-1 encoded.
+     *
+     * @param string $input The string to convert.
+     * @return string The converted string or original if conversion not possible.
+     */
+    public static function utf8encode(string $input): string
+    {
+        return Encoding::utf8encode($input);
     }
 }

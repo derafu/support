@@ -13,6 +13,7 @@ declare(strict_types=1);
 namespace Derafu\TestsSupport;
 
 use Derafu\Support\Arr;
+use Derafu\Support\Encoding;
 use Derafu\Support\Str;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
@@ -21,6 +22,7 @@ use PHPUnit\Framework\TestCase;
 
 #[CoversClass(Str::class)]
 #[CoversClass(Arr::class)]
+#[CoversClass(Encoding::class)]
 class StrTest extends TestCase
 {
     #[Test]
