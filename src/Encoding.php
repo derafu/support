@@ -24,10 +24,10 @@ final class Encoding
      *
      * Only converts strings that are actually UTF-8 encoded.
      *
-     * @param string|array|object $input
-     * @return string|array|object
+     * @param mixed $input
+     * @return mixed
      */
-    public static function utf8decode(string|array|object $input): string|array|object
+    public static function utf8decode(mixed $input): mixed
     {
         if (is_string($input)) {
             if (empty($input) || !mb_detect_encoding($input, 'UTF-8', true)) {
@@ -44,9 +44,13 @@ final class Encoding
             return array_map([self::class, 'utf8decode'], $input);
         }
 
-        foreach ($input as $key => $value) {
-            $input->$key = self::utf8decode($value);
+        if (is_object($input)) {
+            foreach ($input as $key => $value) {
+                $input->$key = self::utf8decode($value);
+            }
+            return $input;
         }
+
         return $input;
     }
 
@@ -55,10 +59,10 @@ final class Encoding
      *
      * Only converts strings that are actually ISO-8859-1 encoded.
      *
-     * @param string|array|object $input
-     * @return string|array|object
+     * @param mixed $input
+     * @return mixed
      */
-    public static function utf8encode(string|array|object $input): string|array|object
+    public static function utf8encode(mixed $input): mixed
     {
         if (is_string($input)) {
             if (empty($input) || !mb_detect_encoding($input, 'ISO-8859-1', true)) {
@@ -75,9 +79,13 @@ final class Encoding
             return array_map([self::class, 'utf8encode'], $input);
         }
 
-        foreach ($input as $key => $value) {
-            $input->$key = self::utf8encode($value);
+        if (is_object($input)) {
+            foreach ($input as $key => $value) {
+                $input->$key = self::utf8encode($value);
+            }
+            return $input;
         }
+
         return $input;
     }
 }
