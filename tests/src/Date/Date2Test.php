@@ -898,6 +898,14 @@ class Date2Test extends TestCase
     }
 
     #[Test]
+    public function shouldGetFirstDayOfPeriod(): void
+    {
+        $this->assertSame('2024-01-01', Date::firstDayPeriod(202401));
+        $this->assertSame('2024-02-01', Date::firstDayPeriod(202402));
+        $this->assertSame('2024-04-01', Date::firstDayPeriod(202404));
+    }
+
+    #[Test]
     public function shouldGetLastDayOfPeriod(): void
     {
         $this->assertSame('2024-01-31', Date::lastDayPeriod(202401));

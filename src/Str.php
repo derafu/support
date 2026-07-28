@@ -209,14 +209,14 @@ final class Str
 
         // Remove any character that is not alphanumeric or the separator.
         $string = preg_replace(
-            '/[^a-z0-9' . preg_quote($separator) . ']/',
+            '/[^a-z0-9' . preg_quote($separator, '/') . ']/',
             '',
             $string
         );
 
         // Replace multiple separators with a single one.
         $string = preg_replace(
-            '/' . preg_quote($separator) . '+/',
+            '/' . preg_quote($separator, '/') . '+/',
             $separator,
             $string
         );

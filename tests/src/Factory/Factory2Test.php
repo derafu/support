@@ -174,7 +174,6 @@ class Factory2Test extends TestCase
     {
         $results = Factory::createMany([]);
 
-        $this->assertIsArray($results);
         $this->assertEmpty($results);
     }
 

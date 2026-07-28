@@ -29,12 +29,12 @@
     },
     "require-dev": {
         "ext-xdebug": "*",
-        "friendsofphp/php-cs-fixer": "^3.94",
-        "phpstan/phpstan": "^1.12",
-        "phpunit/phpunit": "^11.5",
+        "friendsofphp/php-cs-fixer": "^3.95",
+        "phpstan/phpstan": "^2.2",
+        "phpunit/phpunit": "^13.2",
         "league/csv": "^9.28",
-        "nesbot/carbon": "^3.11",
-        "symfony/mime": "^8.0",
+        "nesbot/carbon": "^3.13",
+        "symfony/mime": "^8.1",
         "maennchen/zipstream-php": "^3.2"
     },
     "scripts": {

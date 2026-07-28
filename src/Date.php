@@ -506,6 +506,23 @@ final class Date
     }
 
     /**
+     * Gets the first day of a period.
+     *
+     * @param int|null $period Period in YYYYMM format (null for current month).
+     * @return string First day of the period in Y-m-d format.
+     */
+    public static function firstDayPeriod(?int $period = null): string
+    {
+        if ($period === null) {
+            $date = Carbon::now();
+        } else {
+            $date = self::periodToCarbon($period);
+        }
+
+        return $date->startOfMonth()->format('Y-m-d');
+    }
+
+    /**
      * Gets the last day of a period.
      *
      * @param int|null $period Period in YYYYMM format (null for current month).
