@@ -5,7 +5,7 @@ declare(strict_types=1);
 /**
  * Derafu: Support - Essential PHP Utilities.
  *
- * Copyright (c) 2025 Esteban De La Fuente Rubio / Derafu <https://www.derafu.dev>
+ * Copyright (c) 2026 Esteban De La Fuente Rubio / Derafu <https://www.derafu.dev>
  * Licensed under the MIT License.
  * See LICENSE file for more details.
  */
@@ -24,7 +24,7 @@ use stdClass;
 #[CoversClass(Factory::class)]
 #[CoversClass(Hydrator::class)]
 #[CoversClass(Str::class)]
-class Factory2Test extends TestCase
+class FactoryTest extends TestCase
 {
     #[Test]
     public function shouldCreateStdClass(): void
@@ -189,5 +189,32 @@ class Factory2Test extends TestCase
         $result = Factory::create($data, get_class($class));
 
         $this->assertNull($result->name);
+    }
+
+    #[Test]
+    public function shouldUseSetAttributeAsFallback(): void
+    {
+        $data = ['name' => 'John', 'age' => 30];
+
+        $instance = Factory::create($data, FactoryHelperFallbackClass::class);
+
+        $this->assertInstanceOf(FactoryHelperFallbackClass::class, $instance);
+        $this->assertSame('John', $instance->getAttribute('name'));
+        $this->assertSame(30, $instance->getAttribute('age'));
+    }
+}
+
+class FactoryHelperFallbackClass
+{
+    private array $attributes = [];
+
+    public function setAttribute(string $name, mixed $value): void
+    {
+        $this->attributes[$name] = $value;
+    }
+
+    public function getAttribute(string $name): mixed
+    {
+        return $this->attributes[$name] ?? null;
     }
 }

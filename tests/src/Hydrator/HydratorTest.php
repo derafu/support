@@ -5,7 +5,7 @@ declare(strict_types=1);
 /**
  * Derafu: Support - Essential PHP Utilities.
  *
- * Copyright (c) 2025 Esteban De La Fuente Rubio / Derafu <https://www.derafu.dev>
+ * Copyright (c) 2026 Esteban De La Fuente Rubio / Derafu <https://www.derafu.dev>
  * Licensed under the MIT License.
  * See LICENSE file for more details.
  */
@@ -21,7 +21,7 @@ use PHPUnit\Framework\TestCase;
 
 #[CoversClass(Hydrator::class)]
 #[CoversClass(Str::class)]
-class Hydrator2Test extends TestCase
+class HydratorTest extends TestCase
 {
     #[Test]
     public function shouldHydratePublicProperties(): void
