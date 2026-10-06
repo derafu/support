@@ -25,7 +25,8 @@
         }
     },
     "require": {
-        "php": "^8.5"
+        "php": "^8.5",
+        "derafu/translation": "dev-main"
     },
     "require-dev": {
         "ext-xdebug": "*",
@@ -36,14 +37,16 @@
         "nesbot/carbon": "^3.14",
         "symfony/filesystem": "^8.1",
         "symfony/mime": "^8.1",
-        "maennchen/zipstream-php": "^3.2"
+        "maennchen/zipstream-php": "^3.2",
+        "nikic/php-parser": "^5.9"
     },
     "suggest": {
         "league/csv": "Required by Derafu\\Support\\Csv (read, write, generate and send CSV files).",
         "nesbot/carbon": "Required by Derafu\\Support\\Date (all its date and period helpers).",
         "symfony/filesystem": "Required by Derafu\\Support\\File::rmdir() (recursive removal that does not follow symbolic links).",
         "symfony/mime": "Required by Derafu\\Support\\File::mimetype() (MIME type detection).",
-        "maennchen/zipstream-php": "Required by Derafu\\Support\\File::zip() (ZIP archives)."
+        "maennchen/zipstream-php": "Required by Derafu\\Support\\File::zip() (ZIP archives).",
+        "nikic/php-parser": "Required by the tests of the messages of the package (Derafu\\Translation\\Lint reads the code)."
     },
     "scripts": {
         "docs": "php tools/phpdocumentor run --config=phpdoc.xml",

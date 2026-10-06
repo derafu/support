@@ -12,10 +12,10 @@ declare(strict_types=1);
 
 namespace Derafu\Support;
 
+use Derafu\Translation\Exception\Core\TranslatableRuntimeException as RuntimeException;
 use Exception;
 use RecursiveDirectoryIterator;
 use RecursiveIteratorIterator;
-use RuntimeException;
 use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\Mime\MimeTypes;
 use Throwable;
@@ -72,38 +72,38 @@ final class File
         $directory = dirname($targetFile);
         if (!is_dir($directory)) {
             if (false === @mkdir($directory, 0777, true) && !is_dir($directory)) {
-                throw new RuntimeException(sprintf(
-                    'Unable to create directory (%s).',
-                    $directory
-                ));
+                throw new RuntimeException([
+                    'Unable to create directory ({directory}).',
+                    'directory' => $directory,
+                ]);
             }
         }
 
         // Create temporary file in the same directory.
         $tempFile = tempnam($directory, basename($targetFile));
         if (false === $tempFile) {
-            throw new RuntimeException(sprintf(
-                'Unable to create temporary file in directory (%s).',
-                $directory
-            ));
+            throw new RuntimeException([
+                'Unable to create temporary file in directory ({directory}).',
+                'directory' => $directory,
+            ]);
         }
 
         try {
             // Write content to temporary file.
             if (false === file_put_contents($tempFile, $content)) {
-                throw new RuntimeException(sprintf(
-                    'Unable to write content to temporary file (%s).',
-                    $tempFile
-                ));
+                throw new RuntimeException([
+                    'Unable to write content to temporary file ({file}).',
+                    'file' => $tempFile,
+                ]);
             }
 
             // Set file permissions if specified.
             if ($permissions !== null) {
                 if (!@chmod($tempFile, $permissions)) {
-                    throw new RuntimeException(sprintf(
-                        'Unable to set permissions on temporary file (%s).',
-                        $tempFile
-                    ));
+                    throw new RuntimeException([
+                        'Unable to set permissions on temporary file ({file}).',
+                        'file' => $tempFile,
+                    ]);
                 }
             } else {
                 @chmod($tempFile, 0666 & ~umask());
@@ -111,10 +111,10 @@ final class File
 
             // Perform atomic rename operation.
             if (!@rename($tempFile, $targetFile)) {
-                throw new RuntimeException(sprintf(
-                    'Unable to move temporary file to target location (%s).',
-                    $targetFile
-                ));
+                throw new RuntimeException([
+                    'Unable to move temporary file to target location ({file}).',
+                    'file' => $targetFile,
+                ]);
             }
         } catch (Throwable $e) {
             // Clean up temporary file if anything goes wrong.
@@ -141,7 +141,11 @@ final class File
             $filesystem->remove($dir);
         } catch (Exception $e) {
             throw new RuntimeException(
-                "Failed to remove directory {$dir}: {$e->getMessage()}",
+                [
+                    'Failed to remove directory {directory}: {error}',
+                    'directory' => $dir,
+                    'error' => $e->getMessage(),
+                ],
                 0,
                 $e
             );
@@ -180,7 +184,7 @@ final class File
     ): void {
         if (!is_readable($source)) {
             throw new RuntimeException(
-                "Cannot read source file or directory: {$source}"
+                ['Cannot read source file or directory: {source}', 'source' => $source]
             );
         }
 
@@ -210,7 +214,7 @@ final class File
         $output = fopen($destination, 'wb');
         if ($output === false) {
             throw new RuntimeException(
-                "Cannot open destination file for writing: {$destination}"
+                ['Cannot open destination file for writing: {destination}', 'destination' => $destination]
             );
         }
 
@@ -243,7 +247,7 @@ final class File
             $zip->finish();
         } catch (Exception $e) {
             throw new RuntimeException(
-                "Failed to create ZIP file: {$e->getMessage()}",
+                ['Failed to create ZIP file: {error}', 'error' => $e->getMessage()],
                 0,
                 $e
             );
@@ -271,7 +275,7 @@ final class File
         }
 
         if (!file_exists($zipFile)) {
-            throw new RuntimeException("ZIP file does not exist: {$zipFile}");
+            throw new RuntimeException(['ZIP file does not exist: {file}', 'file' => $zipFile]);
         }
 
         $zip = new ZipArchive();
@@ -279,7 +283,11 @@ final class File
 
         if ($result !== true) {
             throw new RuntimeException(
-                "Failed to open ZIP file: {$zipFile} (Error code: {$result})"
+                [
+                    'Failed to open ZIP file: {file} (Error code: {code})',
+                    'file' => $zipFile,
+                    'code' => $result,
+                ]
             );
         }
 
@@ -291,7 +299,7 @@ final class File
 
                     if (file_exists($filepath)) {
                         throw new RuntimeException(
-                            "File already exists: {$filepath}"
+                            ['File already exists: {file}', 'file' => $filepath]
                         );
                     }
                 }
@@ -299,7 +307,7 @@ final class File
 
             if (!$zip->extractTo($destination)) {
                 throw new RuntimeException(
-                    "Failed to extract ZIP file to: {$destination}"
+                    ['Failed to extract ZIP file to: {destination}', 'destination' => $destination]
                 );
             }
         } finally {
@@ -322,11 +330,11 @@ final class File
         bool $sendHeaders = true
     ): void {
         if (!file_exists($file)) {
-            throw new RuntimeException("File does not exist: {$file}");
+            throw new RuntimeException(['File does not exist: {file}', 'file' => $file]);
         }
 
         if (!is_readable($file)) {
-            throw new RuntimeException("Cannot read file: {$file}");
+            throw new RuntimeException(['Cannot read file: {file}', 'file' => $file]);
         }
 
         if ($sendHeaders) {
@@ -348,7 +356,7 @@ final class File
         }
 
         if (readfile($file) === false) {
-            throw new RuntimeException("Failed to send file: {$file}");
+            throw new RuntimeException(['Failed to send file: {file}', 'file' => $file]);
         }
 
         if ($delete) {

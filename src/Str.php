@@ -12,7 +12,7 @@ declare(strict_types=1);
 
 namespace Derafu\Support;
 
-use InvalidArgumentException;
+use Derafu\Translation\Exception\Logic\TranslatableInvalidArgumentException as InvalidArgumentException;
 
 /**
  * String manipulation and utilities class.
@@ -86,9 +86,10 @@ final class Str
 
         foreach ($styles as $requestedStyle) {
             if (!isset($patterns[$requestedStyle])) {
-                throw new InvalidArgumentException(
-                    "Unsupported placeholder style: {$requestedStyle}."
-                );
+                throw new InvalidArgumentException([
+                    'Unsupported placeholder style: {style}.',
+                    'style' => $requestedStyle,
+                ]);
             }
             $activePatterns[] = $patterns[$requestedStyle];
         }

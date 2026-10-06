@@ -12,7 +12,7 @@ declare(strict_types=1);
 
 namespace Derafu\Support;
 
-use LogicException;
+use Derafu\Translation\Exception\Core\TranslatableLogicException as LogicException;
 use stdClass;
 
 /**
@@ -81,11 +81,11 @@ final class Factory
         $instance = self::create($data, $class);
 
         if (!($instance instanceof $expectedType)) {
-            throw new LogicException(sprintf(
-                'Created instance of %s does not match expected type %s.',
-                $class,
-                $expectedType
-            ));
+            throw new LogicException([
+                'Created instance of {class} does not match expected type {expectedType}.',
+                'class' => $class,
+                'expectedType' => $expectedType,
+            ]);
         }
 
         return $instance;

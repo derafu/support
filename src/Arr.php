@@ -12,7 +12,7 @@ declare(strict_types=1);
 
 namespace Derafu\Support;
 
-use InvalidArgumentException;
+use Derafu\Translation\Exception\Logic\TranslatableInvalidArgumentException as InvalidArgumentException;
 use SimpleXMLElement;
 
 /**
@@ -323,9 +323,10 @@ final class Arr
         $result = [];
         foreach ($table as $index => $row) {
             if (!is_array($row) || count($row) !== 2) {
-                throw new InvalidArgumentException(
-                    "Row {$index} must have exactly 2 columns"
-                );
+                throw new InvalidArgumentException([
+                    'Row {index} must have exactly 2 columns.',
+                    'index' => $index,
+                ]);
             }
             $result[array_shift($row)] = array_shift($row);
         }

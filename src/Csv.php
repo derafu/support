@@ -12,11 +12,11 @@ declare(strict_types=1);
 
 namespace Derafu\Support;
 
+use Derafu\Translation\Exception\Core\TranslatableLogicException as LogicException;
+use Derafu\Translation\Exception\Core\TranslatableRuntimeException as RuntimeException;
 use League\Csv\Exception as CsvException;
 use League\Csv\Reader;
 use League\Csv\Writer;
-use LogicException;
-use RuntimeException;
 
 /**
  * CSV file manipulation utilities.
@@ -59,7 +59,7 @@ final class Csv
             return iterator_to_array($csv->getRecords());
         } catch (CsvException $e) {
             throw new RuntimeException(
-                "Failed to parse CSV content: {$e->getMessage()}",
+                ['Failed to parse CSV content: {error}', 'error' => $e->getMessage()],
                 0,
                 $e
             );
@@ -85,19 +85,23 @@ final class Csv
         string $encoding = 'UTF-8'
     ): array {
         if (!is_readable($file)) {
-            throw new RuntimeException("Cannot read file: {$file}");
+            throw new RuntimeException(['Cannot read file: {file}', 'file' => $file]);
         }
 
         try {
             $content = file_get_contents($file);
             if ($content === false) {
-                throw new RuntimeException("Failed to read file: {$file}");
+                throw new RuntimeException(['Failed to read file: {file}', 'file' => $file]);
             }
 
             return self::load($content, $separator, $enclosure, $escape, $encoding);
         } catch (CsvException $e) {
             throw new RuntimeException(
-                "Failed to read CSV file {$file}: {$e->getMessage()}",
+                [
+                    'Failed to read CSV file {file}: {error}',
+                    'file' => $file,
+                    'error' => $e->getMessage(),
+                ],
                 0,
                 $e
             );
@@ -124,13 +128,13 @@ final class Csv
     ): void {
         $dirname = dirname($file);
         if (!is_writable($dirname)) {
-            throw new LogicException("Cannot use directory: {$dirname}");
+            throw new LogicException(['Cannot use directory: {directory}', 'directory' => $dirname]);
         }
 
         $content = self::generate($data, $separator, $enclosure, $escape);
 
         if (file_put_contents($file, $content) === false) {
-            throw new LogicException("Failed to write CSV file: {$file}");
+            throw new LogicException(['Failed to write CSV file: {file}', 'file' => $file]);
         }
     }
 
@@ -178,7 +182,7 @@ final class Csv
             return $content;
         } catch (CsvException $e) {
             throw new RuntimeException(
-                "Failed to generate CSV: {$e->getMessage()}",
+                ['Failed to generate CSV: {error}', 'error' => $e->getMessage()],
                 0,
                 $e
             );

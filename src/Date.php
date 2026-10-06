@@ -14,8 +14,8 @@ namespace Derafu\Support;
 
 use Carbon\Carbon;
 use DateTime;
+use Derafu\Translation\Exception\Logic\TranslatableInvalidArgumentException as InvalidArgumentException;
 use Exception;
-use InvalidArgumentException;
 
 /**
  * Date and time manipulation utilities.
@@ -110,9 +110,10 @@ final class Date
         $month = (int)substr((string)$period, 4, 2);
 
         if (!isset(self::MONTHS_SPANISH[$month])) {
-            throw new InvalidArgumentException(
-                "Invalid month in period: {$period}"
-            );
+            throw new InvalidArgumentException([
+                'Invalid month in period: {period}',
+                'period' => $period,
+            ]);
         }
 
         return self::MONTHS_SPANISH[$month] . ' de ' . $year;
@@ -190,9 +191,11 @@ final class Date
         try {
             return Carbon::parse($date);
         } catch (Exception $e) {
-            throw new InvalidArgumentException(
-                "Invalid date string: {$date}. {$e->getMessage()}"
-            );
+            throw new InvalidArgumentException([
+                'Invalid date string: {date}. {error}',
+                'date' => $date,
+                'error' => $e->getMessage(),
+            ]);
         }
     }
 
@@ -413,9 +416,10 @@ final class Date
         $month = (int)substr((string)$period, 4, 2);
 
         if ($month < 1 || $month > 12) {
-            throw new InvalidArgumentException(
-                "Invalid month in period: {$period}"
-            );
+            throw new InvalidArgumentException([
+                'Invalid month in period: {period}',
+                'period' => $period,
+            ]);
         }
 
         return Carbon::createFromDate($year, $month, 1);
@@ -608,7 +612,7 @@ final class Date
             'S' => $date->addMonths($steps * 6),
             'Y' => $date->addYears($steps),
             default => throw new InvalidArgumentException(
-                "Invalid time unit: {$unit}"
+                ['Invalid time unit: {unit}', 'unit' => $unit]
             )
         };
     }
@@ -646,7 +650,7 @@ final class Date
             'S' => $date->subMonths($steps * 6),
             'Y' => $date->subYears($steps),
             default => throw new InvalidArgumentException(
-                "Invalid time unit: {$unit}"
+                ['Invalid time unit: {unit}', 'unit' => $unit]
             )
         };
     }

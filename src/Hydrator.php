@@ -12,7 +12,7 @@ declare(strict_types=1);
 
 namespace Derafu\Support;
 
-use LogicException;
+use Derafu\Translation\Exception\Core\TranslatableLogicException as LogicException;
 use ReflectionClass;
 use ReflectionException;
 
@@ -45,11 +45,11 @@ final class Hydrator
 
         foreach ($data as $attribute => $value) {
             if (!self::tryAssignValue($instance, $reflection, $attribute, $value)) {
-                throw new LogicException(sprintf(
-                    'Cannot assign attribute "%s" to class %s. No property or suitable setter method found.',
-                    $attribute,
-                    $reflection->getName()
-                ));
+                throw new LogicException([
+                    'Cannot assign attribute "{attribute}" to class {class}. No property or suitable setter method found.',
+                    'attribute' => $attribute,
+                    'class' => $reflection->getName(),
+                ]);
             }
         }
 
@@ -116,7 +116,11 @@ final class Hydrator
             return self::hydrate($instance, $data);
         } catch (ReflectionException $e) {
             throw new LogicException(
-                "Failed to create instance of {$class}: {$e->getMessage()}",
+                [
+                    'Failed to create instance of {class}: {error}',
+                    'class' => $class,
+                    'error' => $e->getMessage(),
+                ],
                 0,
                 $e
             );
