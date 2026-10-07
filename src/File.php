@@ -219,11 +219,20 @@ final class File
         }
 
         try {
-            $zip = new ZipStream(outputStream: $output);
+            // The archive goes to a file: the headers of a download are not
+            // sent (they would be the ones of the response of whoever calls).
+            $zip = new ZipStream(outputStream: $output, sendHttpHeaders: false);
 
             if (is_dir($source)) {
+                // The name of each file is its path inside the directory, taken
+                // from the path as it was given: the real path of the file is
+                // not the same when the directory is reached through a symbolic
+                // link (or has a trailing slash, or `..`), and then the names
+                // would be cut at the wrong place.
+                $directory = rtrim($source, '/\\');
+
                 $files = new RecursiveIteratorIterator(
-                    new RecursiveDirectoryIterator($source),
+                    new RecursiveDirectoryIterator($directory),
                     RecursiveIteratorIterator::LEAVES_ONLY
                 );
 
@@ -232,11 +241,8 @@ final class File
                         continue;
                     }
 
-                    $filePath = $file->getRealPath();
-                    $relativePath = substr(
-                        $filePath,
-                        strlen($source) + 1
-                    );
+                    $filePath = $file->getPathname();
+                    $relativePath = substr($filePath, strlen($directory) + 1);
 
                     $zip->addFileFromPath($relativePath, $filePath);
                 }

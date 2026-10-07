@@ -12,6 +12,8 @@ declare(strict_types=1);
 
 namespace Derafu\Support;
 
+use Stringable;
+
 /**
  * Value casting utility class.
  *
@@ -21,6 +23,14 @@ final class Caster
 {
     /**
      * Casts a mixed value to the most appropriate scalar type.
+     *
+     * A string is parsed (see `parseString()`). `null`, booleans, integers and
+     * floats are returned as they are. Any other value is turned into a string:
+     *
+     *   - An array, as its JSON.
+     *   - An object that has `__toString()`, as its text.
+     *   - Any other object, as the name of its class.
+     *   - A resource, as `Resource id #n`.
      *
      * @param mixed $value The value to cast.
      * @return int|float|bool|string|null The casted value.
@@ -44,7 +54,7 @@ final class Caster
 
         // Arrays, objects, resources, etc. → force to string.
         if (!is_string($value)) {
-            return (string) $value;
+            return self::stringify($value);
         }
 
         // Parse string to the most appropriate scalar type.
@@ -66,6 +76,30 @@ final class Caster
             'value' => $casted,
             'type'  => gettype($casted),
         ];
+    }
+
+    /**
+     * Turns a value that is not a scalar into a string, without warnings: an
+     * array as its JSON, an object as its text (or the name of its class if it
+     * has none) and anything else (a resource) as PHP writes it.
+     *
+     * @param mixed $value The value to turn into a string.
+     * @return string The string.
+     */
+    private static function stringify(mixed $value): string
+    {
+        if (is_array($value)) {
+            return (string) json_encode(
+                $value,
+                JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_PARTIAL_OUTPUT_ON_ERROR
+            );
+        }
+
+        if (is_object($value)) {
+            return $value instanceof Stringable ? (string) $value : get_debug_type($value);
+        }
+
+        return (string) $value;
     }
 
     /**

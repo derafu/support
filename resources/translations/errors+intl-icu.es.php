@@ -83,6 +83,14 @@ return [
     'Failed to send file: {file}' =>
         'No se pudo enviar el archivo: {file}',
 
+    // Ip.
+    'The range "{range}" is not valid.' =>
+        'El rango "{range}" no es válido.',
+    'The prefix {prefix} is not valid for an IPv{version} address.' =>
+        'El prefijo {prefix} no es válido para una dirección IPv{version}.',
+    'The value "{ip}" is not an IP address.' =>
+        'El valor "{ip}" no es una dirección IP.',
+
     // Str.
     'Unsupported placeholder style: {style}.' =>
         'Estilo de marcador no soportado: {style}.',

@@ -17,6 +17,7 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use stdClass;
 
 #[CoversClass(Caster::class)]
 class CasterTest extends TestCase
@@ -69,6 +70,63 @@ class CasterTest extends TestCase
         };
 
         $this->assertSame('hello object', Caster::cast($obj));
+    }
+
+    #[Test]
+    public function shouldCastArraysToTheirJson(): void
+    {
+        $this->assertSame('[]', Caster::cast([]));
+        $this->assertSame('[1,2,3]', Caster::cast([1, 2, 3]));
+        $this->assertSame('{"a":1,"b":{"c":"x"}}', Caster::cast(['a' => 1, 'b' => ['c' => 'x']]));
+        $this->assertSame('{"name":"Ñandú/x"}', Caster::cast(['name' => 'Ñandú/x']), 'Unicode and slashes as they are.');
+        $this->assertSame(['value' => '[1]', 'type' => 'string'], Caster::castWithType([1]));
+    }
+
+    #[Test]
+    public function shouldCastAnArrayWithoutWarnings(): void
+    {
+        // Before, an array gave "Array" and PHP warned about it.
+        $warnings = [];
+        set_error_handler(function (int $level, string $message) use (&$warnings): bool {
+            $warnings[] = $message;
+
+            return true;
+        });
+
+        try {
+            $result = Caster::cast(['a' => 1]);
+
+            // A value that JSON can not write whole (a recursive array) is written
+            // as far as it can be.
+            $recursive = [];
+            $recursive['self'] = &$recursive;
+            $partial = Caster::cast($recursive);
+        } finally {
+            restore_error_handler();
+        }
+
+        $this->assertSame('{"a":1}', $result);
+        $this->assertIsString($partial);
+        $this->assertSame([], $warnings);
+    }
+
+    #[Test]
+    public function shouldCastAnObjectWithoutToStringToTheNameOfItsClass(): void
+    {
+        $this->assertSame('stdClass', Caster::cast(new stdClass()));
+        $this->assertSame(self::class, Caster::cast($this));
+        $this->assertSame('class@anonymous', Caster::cast(new class () {
+        }));
+    }
+
+    #[Test]
+    public function shouldCastAResourceToItsText(): void
+    {
+        $resource = fopen('php://memory', 'r');
+
+        $this->assertMatchesRegularExpression('/^Resource id #\d+$/', (string) Caster::cast($resource));
+
+        fclose($resource);
     }
 
     // -------------------------------------------------------------------------

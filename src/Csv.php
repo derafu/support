@@ -254,7 +254,7 @@ final class Csv
         }
 
         try {
-            $csv = Reader::createFromPath($file, 'r');
+            $csv = Reader::from($file, 'r');
             $csv->setDelimiter($separator);
             $csv->setEnclosure($enclosure);
             $csv->setEscape($escape);

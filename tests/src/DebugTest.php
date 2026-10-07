@@ -208,4 +208,54 @@ class DebugTest extends TestCase
         $this->assertSame(1000, $result['length']);
         $this->assertSame(1000, strlen($result['value']));
     }
+
+    #[Test]
+    public function shouldReportWhereDebugPrintWasCalled(): void
+    {
+        // The information is the one of the call of the user, not the one of
+        // the code of the package.
+        $line = __LINE__ + 2;
+        ob_start();
+        Debug::print('x', 'label');
+        $output = (string) ob_get_clean();
+
+        $this->assertStringContainsString('[file] => ' . __FILE__, $output);
+        $this->assertStringContainsString('[line] => ' . $line, $output);
+        $this->assertStringContainsString('[caller] => ' . self::class . '::shouldReportWhereDebugPrintWasCalled()', $output);
+        $this->assertStringNotContainsString('src/Debug.php', $output);
+    }
+
+    #[Test]
+    public function shouldReportTheCallerOfInspectFromAFunctionAndFromTheGlobalScope(): void
+    {
+        // A call from the code that is outside of any function (there is no
+        // caller to report) must work as any other, without warnings. It needs a
+        // script of its own: in a test there is always a function that calls.
+        $script = tempnam(sys_get_temp_dir(), 'derafu-debug-') ?: '';
+        file_put_contents($script, '<?php
+require ' . var_export(dirname(__DIR__, 2) . '/vendor/autoload.php', true) . ';
+function inAFunction() { return Derafu\Support\Debug::inspect(1); }
+$global = Derafu\Support\Debug::inspect([1, 2], "global");
+$function = inAFunction();
+echo json_encode(["global" => $global, "function" => $function]);
+');
+
+        try {
+            $output = (string) shell_exec(
+                escapeshellarg(PHP_BINARY) . ' -d display_errors=1 -d error_reporting=-1 '
+                . escapeshellarg($script) . ' 2>&1'
+            );
+        } finally {
+            unlink($script);
+        }
+
+        // Without warnings or notices, the output is only the JSON.
+        $result = json_decode($output, true);
+        $this->assertIsArray($result, $output);
+        $this->assertSame('{main}', $result['global']['caller']);
+        $this->assertSame($script, $result['global']['file']);
+        $this->assertSame(4, $result['global']['line']);
+        $this->assertSame('inAFunction()', $result['function']['caller']);
+        $this->assertSame(3, $result['function']['line']);
+    }
 }

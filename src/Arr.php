@@ -188,10 +188,17 @@ final class Arr
     /**
      * Creates a hierarchical tree from a flat array using parent references.
      *
-     * @param array $items Array of items.
-     * @param string $parentField Name of the field containing the parent reference.
+     * The **keys** of the array are the identifiers of the items: the field
+     * `$parentField` of an item has the key of its parent. The keys are kept in
+     * the tree. The field of the parent is removed from each item and the
+     * children go in `$childrenField` (an empty array if there are none). An
+     * item that does not have the field of the parent is skipped, with
+     * everything below it.
+     *
+     * @param array $items Array of items, by their identifier.
+     * @param string $parentField Name of the field containing the key of the parent.
      * @param string $childrenField Name of the field to store children.
-     * @param mixed $parentId Value indicating root level items.
+     * @param mixed $parentId Value of the parent field for root level items.
      * @return array The hierarchical tree.
      */
     public static function toTree(
@@ -225,6 +232,10 @@ final class Arr
 
     /**
      * Converts a hierarchical tree to a flat list with level indicators.
+     *
+     * The elements go in depth order, with the keys that they had in the tree.
+     * Each one has only its name (`name`, from `$nameField`) and its `level`
+     * (0 for the root).
      *
      * @param array $tree The tree structure.
      * @param string $nameField Field containing the item name.

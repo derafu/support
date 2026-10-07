@@ -28,16 +28,24 @@ final class Hydrator
     /**
      * Hydrates an object with data from an array.
      *
-     * The method attempts to set values in the following order:
-     * 1. Direct property access if property exists
-     * 2. setAttribute() method if it exists
-     * 3. setXxx() method where Xxx is the studly case version of the attribute
-     * 4. setXxxAttribute() method
+     * For each attribute, the first of these that is possible is used:
+     *
+     *   1. The `setXxx()` method, where `Xxx` is the studly case version of the
+     *      attribute (`first_name` is `setFirstName()`).
+     *   2. The `setXxxAttribute()` method.
+     *   3. The `setAttribute($name, $value)` method, if the class has it: it
+     *      receives every attribute that the two before did not take.
+     *   4. The property with the name of the attribute, which is set directly
+     *      (also if it is protected or private).
+     *
+     * Because of the last one, the attributes must not come from a user as they
+     * are: they are the names of the properties.
      *
      * @param object $instance Object instance to hydrate.
      * @param array $data Data to populate the object with.
      * @return object The hydrated object instance.
-     * @throws LogicException If a value cannot be assigned.
+     * @throws LogicException If an attribute cannot be assigned (there is no
+     * setter and no property for it).
      */
     public static function hydrate(object $instance, array $data): object
     {

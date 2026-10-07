@@ -438,6 +438,12 @@ class StrTest extends TestCase
         ];
     }
 
+    #[Test]
+    public function shouldNotConvertAgainATextThatIsAlreadyUtf8(): void
+    {
+        $this->assertSame('El niño cumplió 15 años', Str::utf8encode('El niño cumplió 15 años'));
+    }
+
     public function testStrUtf2IsoInvalidEncoding(): void
     {
         // Secuencia UTF-8 inválida.

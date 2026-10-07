@@ -78,6 +78,63 @@ class FileCompressTest extends TestCase
     }
 
     #[Test]
+    public function shouldNameTheEntriesByTheirPathInsideADirectoryReachedThroughASymbolicLink(): void
+    {
+        // The real path of the files is not the path of the directory that was
+        // given: the names must not depend on it.
+        $real = $this->tempDir . '/the-real-directory-with-a-long-name';
+        mkdir($real . '/sub', 0777, true);
+        file_put_contents($real . '/file.txt', 'a');
+        file_put_contents($real . '/sub/inner.txt', 'b');
+        $link = $this->tempDir . '/link';
+        symlink($real, $link);
+
+        File::zip($link, $this->tempDir . '/link.zip');
+
+        $zip = new ZipArchive();
+        $this->assertTrue($zip->open($this->tempDir . '/link.zip'));
+        $entries = $this->getZipEntries($zip);
+        sort($entries);
+        $this->assertSame(['file.txt', 'sub/inner.txt'], $entries);
+        $zip->close();
+    }
+
+    #[Test]
+    public function shouldNameTheEntriesTheSameWithATrailingSlash(): void
+    {
+        $source = $this->tempDir . '/with-slash';
+        mkdir($source . '/sub', 0777, true);
+        file_put_contents($source . '/file.txt', 'a');
+        file_put_contents($source . '/sub/inner.txt', 'b');
+
+        File::zip($source . '/', $this->tempDir . '/with-slash.zip');
+
+        $zip = new ZipArchive();
+        $this->assertTrue($zip->open($this->tempDir . '/with-slash.zip'));
+        $entries = $this->getZipEntries($zip);
+        sort($entries);
+        $this->assertSame(['file.txt', 'sub/inner.txt'], $entries);
+        $zip->close();
+    }
+
+    #[Test]
+    public function shouldNotSendHttpHeadersWhenTheArchiveGoesToAFile(): void
+    {
+        $source = $this->tempDir . '/quiet';
+        mkdir($source);
+        file_put_contents($source . '/file.txt', 'a');
+
+        // In the command line the headers are not sent, but Xdebug keeps the ones
+        // that were asked for (also the ones of the tests that came before).
+        $this->assertTrue(function_exists('xdebug_get_headers'), 'Xdebug is needed to see the headers.');
+        $before = xdebug_get_headers();
+
+        File::zip($source, $this->tempDir . '/quiet.zip');
+
+        $this->assertSame($before, xdebug_get_headers());
+    }
+
+    #[Test]
     public function shouldCompressFileWithoutDownload(): void
     {
         $source = $this->tempDir . '/testFile.txt';

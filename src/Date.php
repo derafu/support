@@ -213,22 +213,33 @@ final class Date
     /**
      * Gets a date from an Excel serial number.
      *
-     * Excel uses a different epoch date system:
+     * Excel counts the days from January 1, 1900 (the number 1), and it has a
+     * day that does not exist: it takes 1900 for a leap year, so the number 60
+     * is a February 29, 1900 that was never there.
      *
-     *   - Dates before March 1, 1900 are counted from January 1, 1900.
-     *   - The system includes a special case for the non-existent February 29, 1900.
+     *   - The numbers before 60 are the dates before March 1, 1900.
+     *   - The number 60, the day that does not exist, gives February 28, 1900.
+     *   - From 61 (March 1, 1900) on, the date is that many days after
+     *     December 30, 1899 (for example, 25569 is 1970-01-01 and 45292 is
+     *     2024-01-01).
      *
      * @param int $n Excel serial number.
      * @return Carbon
      */
     public static function fromSerialNumber(int $n): Carbon
     {
-        // Special case for 1970-01-01 (Unix epoch).
-        if ($n === 25569) {
-            return Carbon::createFromTimestamp(0);
+        // The days before the day that does not exist: 1 is January 1, 1900.
+        if ($n < 60) {
+            return Carbon::create(1899, 12, 31)->addDays($n);
         }
 
-        return Carbon::create(1900, 1, 1)->addDays($n - 1);
+        // The day that does not exist, February 29, 1900, is February 28.
+        if ($n === 60) {
+            return Carbon::create(1900, 2, 28);
+        }
+
+        // From March 1, 1900 the number includes the day that does not exist.
+        return Carbon::create(1899, 12, 30)->addDays($n);
     }
 
     /**
@@ -591,6 +602,13 @@ final class Date
      *   - 'S': Semesters.
      *   - 'Y': Years.
      *
+     * The months, quarters, semesters and years do not go over into the next
+     * month: when the day does not exist in the month that is reached, the
+     * result is the last day of that month (January 31 plus one month is
+     * February 29 in a leap year, and February 28 in the others).
+     *
+     * The date that is given is not changed: the result is a new `Carbon`.
+     *
      * @param Carbon|string|null $date Starting date (null for current date).
      * @param string $unit Time unit (D, W, M, Q, S, Y).
      * @param int $steps Number of units to move forward.
@@ -602,15 +620,15 @@ final class Date
         string $unit = 'M',
         int $steps = 1
     ): Carbon {
-        $date = $date ? self::ensureCarbon($date) : Carbon::now();
+        $date = $date ? self::ensureCarbon($date)->copy() : Carbon::now();
 
         return match (strtoupper($unit)) {
             'D' => $date->addDays($steps),
             'W' => $date->addWeeks($steps),
-            'M' => $date->addMonths($steps),
-            'Q' => $date->addQuarters($steps),
-            'S' => $date->addMonths($steps * 6),
-            'Y' => $date->addYears($steps),
+            'M' => $date->addMonthsNoOverflow($steps),
+            'Q' => $date->addMonthsNoOverflow($steps * 3),
+            'S' => $date->addMonthsNoOverflow($steps * 6),
+            'Y' => $date->addYearsNoOverflow($steps),
             default => throw new InvalidArgumentException(
                 ['Invalid time unit: {unit}', 'unit' => $unit]
             )
@@ -629,6 +647,13 @@ final class Date
      *   - 'S': Semesters.
      *   - 'Y': Years.
      *
+     * The months, quarters, semesters and years do not go over into the next
+     * month: when the day does not exist in the month that is reached, the
+     * result is the last day of that month (March 31 minus one month is
+     * February 29 in a leap year, and February 28 in the others).
+     *
+     * The date that is given is not changed: the result is a new `Carbon`.
+     *
      * @param Carbon|string|null $date Starting date (null for current date).
      * @param string $unit Time unit (D, W, M, Q, S, Y).
      * @param int $steps Number of units to move backward.
@@ -640,15 +665,15 @@ final class Date
         string $unit = 'M',
         int $steps = 1
     ): Carbon {
-        $date = $date ? self::ensureCarbon($date) : Carbon::now();
+        $date = $date ? self::ensureCarbon($date)->copy() : Carbon::now();
 
         return match (strtoupper($unit)) {
             'D' => $date->subDays($steps),
             'W' => $date->subWeeks($steps),
-            'M' => $date->subMonths($steps),
-            'Q' => $date->subQuarters($steps),
-            'S' => $date->subMonths($steps * 6),
-            'Y' => $date->subYears($steps),
+            'M' => $date->subMonthsNoOverflow($steps),
+            'Q' => $date->subMonthsNoOverflow($steps * 3),
+            'S' => $date->subMonthsNoOverflow($steps * 6),
+            'Y' => $date->subYearsNoOverflow($steps),
             default => throw new InvalidArgumentException(
                 ['Invalid time unit: {unit}', 'unit' => $unit]
             )

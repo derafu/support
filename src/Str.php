@@ -279,8 +279,10 @@ final class Str
      * @param string $startDelimiter The starting delimiter.
      * @param string $endDelimiter The ending delimiter.
      * @param int $offset Starting position for the search.
-     * @return array{string: string, start: int, end: int}|null Extracted data
-     * or `null` if not found.
+     * @return array{string: string, start: int, end: int, length: int}|null
+     * Extracted data or `null` if not found: the text between the delimiters
+     * (trimmed), the position where it starts, the position of its last
+     * character and its length (before trimming).
      */
     public static function extract(
         string $text,
@@ -426,7 +428,8 @@ final class Str
     /**
      * Converts a string from ISO-8859-1 to UTF-8.
      *
-     * Only converts if the input string is actually ISO-8859-1 encoded.
+     * Only converts a string that is not already UTF-8 (see
+     * `Encoding::utf8encode()`).
      *
      * @param string $input The string to convert.
      * @return string The converted string or original if conversion not possible.

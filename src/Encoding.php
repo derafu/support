@@ -57,7 +57,10 @@ final class Encoding
     /**
      * Converts a string (or recursively an array/object) from ISO-8859-1 to UTF-8.
      *
-     * Only converts strings that are actually ISO-8859-1 encoded.
+     * Only converts strings that are not already UTF-8: a text that is valid
+     * UTF-8 is returned as it is. A text of ISO-8859-1 whose bytes also make a
+     * valid UTF-8 sequence (`Ã±`, for example) can not be told from UTF-8, so it
+     * is not converted either.
      *
      * @param mixed $input
      * @return mixed
@@ -65,7 +68,14 @@ final class Encoding
     public static function utf8encode(mixed $input): mixed
     {
         if (is_string($input)) {
-            if (empty($input) || !mb_detect_encoding($input, 'ISO-8859-1', true)) {
+            // A text that is already UTF-8 is not converted again: any sequence of
+            // bytes is valid ISO-8859-1, so this is the only way to know that it
+            // is not (converting it would write `Ã±` instead of `ñ`).
+            if (
+                empty($input)
+                || mb_check_encoding($input, 'UTF-8')
+                || !mb_detect_encoding($input, 'ISO-8859-1', true)
+            ) {
                 return $input;
             }
 
