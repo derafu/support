@@ -395,6 +395,35 @@ final class Ip
     }
 
     /**
+     * Gives the network that an address belongs to, written as a range (CIDR
+     * notation): the network address and its prefix, like `203.0.113.0/24` or
+     * `2001:db8:1:2::/64`. An IPv4 address with the prefix 32 is its own network,
+     * a range of one: `203.0.113.77/32`.
+     *
+     * It is the same as `network()`, with the prefix that was used, so the result
+     * says what it is and can be used as a range (`inRange()`, `range()`).
+     *
+     * @param string $ip The IP address.
+     * @param int $ipv4Prefix The bits of the network for an IPv4 address, from
+     * 0 to 32. By default, 32: the address.
+     * @param int $ipv6Prefix The bits of the network for an IPv6 address, from
+     * 0 to 128. By default, 64.
+     * @return string|null The network (`network/prefix`), or null if it is not
+     * an IP address.
+     * @throws InvalidArgumentException If the prefix that applies to the
+     * address is not valid for its version.
+     */
+    public static function cidr(string $ip, int $ipv4Prefix = 32, int $ipv6Prefix = 64): ?string
+    {
+        $network = self::network($ip, $ipv4Prefix, $ipv6Prefix);
+        if ($network === null) {
+            return null;
+        }
+
+        return $network . '/' . (self::version($network) === 4 ? $ipv4Prefix : $ipv6Prefix);
+    }
+
+    /**
      * Compares two IP addresses by their value, to sort them: an IPv4 goes
      * before an IPv6, and in the same version the lower number goes first. The
      * same address written in two ways is equal.

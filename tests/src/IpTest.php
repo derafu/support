@@ -392,6 +392,60 @@ final class IpTest extends TestCase
     }
 
     /**
+     * @return array<string, array{string, int, int, string|null}>
+     */
+    public static function provideCidrs(): array
+    {
+        // Address, prefix of ipv4, prefix of ipv6, network in CIDR notation.
+        return [
+            'ipv4 by default is a range of one' => ['100.100.100.100', 32, 64, '100.100.100.100/32'],
+            'ipv4 with a prefix' => ['203.0.113.77', 24, 64, '203.0.113.0/24'],
+            'ipv4 with a prefix that is not a multiple of eight' => ['172.20.5.5', 12, 64, '172.16.0.0/12'],
+            'ipv4 with prefix zero' => ['203.0.113.77', 0, 64, '0.0.0.0/0'],
+            'ipv6 by default is the /64' => ['2001:db8:1:2:3:4:5:6', 32, 64, '2001:db8:1:2::/64'],
+            'ipv6 with another prefix' => ['2001:db8:1:2:3:4:5:6', 32, 48, '2001:db8:1::/48'],
+            'ipv6 with prefix 128' => ['2001:DB8::1', 32, 128, '2001:db8::1/128'],
+            'ipv4 written as ipv6 is ipv4' => ['::ffff:203.0.113.77', 24, 64, '203.0.113.0/24'],
+            'an address of the shared range is its own network' => ['100.100.100.100', 10, 64, '100.64.0.0/10'],
+            'not an address' => ['nope', 32, 64, null],
+        ];
+    }
+
+    #[Test]
+    #[DataProvider('provideCidrs')]
+    public function aNetworkCanBeWrittenAsARange(string $ip, int $ipv4Prefix, int $ipv6Prefix, ?string $expected): void
+    {
+        $this->assertSame($expected, Ip::cidr($ip, $ipv4Prefix, $ipv6Prefix));
+    }
+
+    #[Test]
+    public function theNetworkAsARangeContainsTheAddressAndIsAValidRange(): void
+    {
+        foreach (['203.0.113.77', '2001:db8:1:2:3:4:5:6', '::ffff:10.1.2.3'] as $ip) {
+            $cidr = (string) Ip::cidr($ip, 24, 48);
+
+            $this->assertTrue(Ip::isRange($cidr), $cidr);
+            $this->assertTrue(Ip::inRange($ip, $cidr), $cidr);
+        }
+    }
+
+    #[Test]
+    public function theNetworkAsARangeWithTheDefaultsIsTheNetworkWithItsPrefix(): void
+    {
+        $this->assertSame(Ip::network('203.0.113.77') . '/32', Ip::cidr('203.0.113.77'));
+        $this->assertSame(Ip::network('2001:db8:1:2:3:4:5:6') . '/64', Ip::cidr('2001:db8:1:2:3:4:5:6'));
+    }
+
+    #[Test]
+    #[DataProvider('provideWrongPrefixes')]
+    public function aPrefixThatIsNotValidForTheVersionIsAnErrorAlsoWhenWritingTheNetworkAsARange(string $ip, int $ipv4Prefix, int $ipv6Prefix): void
+    {
+        $this->expectException(TranslatableInvalidArgumentException::class);
+
+        Ip::cidr($ip, $ipv4Prefix, $ipv6Prefix);
+    }
+
+    /**
      * @return array<string, array{string, int, int}>
      */
     public static function provideWrongPrefixes(): array
