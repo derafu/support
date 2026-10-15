@@ -79,6 +79,59 @@ final class Caster
     }
 
     /**
+     * Turns a value that is a number, or a string that is numeric, into a
+     * number: an integer if its value is a whole number, a float if not.
+     *
+     * Unlike `cast()`, only numbers are accepted, and a string is never read as
+     * anything else (`"true"` and `""` are not numbers). `"25"` and `25.0` are
+     * `25` (an integer), `"1.5"` is `1.5`, and `"1e3"` is `1000`. A whole number
+     * that is too big for an integer is a float, as are `NAN` and `INF`.
+     *
+     * @param mixed $value The value to turn into a number.
+     * @return int|float|null The number, or `null` if the value is not one.
+     */
+    public static function toNumber(mixed $value): int|float|null
+    {
+        if (!is_numeric($value)) {
+            return null;
+        }
+
+        $number = $value + 0;
+
+        // The cast is only done when it is possible: PHP warns about a float that
+        // is not finite or that does not fit in an integer.
+        if (
+            is_float($number)
+            && is_finite($number)
+            && floor($number) === $number
+            && abs($number) < 9.2233720368547758E+18
+        ) {
+            return (int) $number;
+        }
+
+        return $number;
+    }
+
+    /**
+     * Turns a value that is text into a string: a string as it is, and an
+     * object that is `Stringable` as its text.
+     *
+     * Unlike `cast()`, nothing else is turned into text: not a number, a
+     * boolean, `null`, an array nor an object that has no text.
+     *
+     * @param mixed $value The value to turn into a string.
+     * @return string|null The string, or `null` if the value is not text.
+     */
+    public static function toString(mixed $value): ?string
+    {
+        return match (true) {
+            is_string($value) => $value,
+            $value instanceof Stringable => (string) $value,
+            default => null,
+        };
+    }
+
+    /**
      * Turns a value that is not a scalar into a string, without warnings: an
      * array as its JSON, an object as its text (or the name of its class if it
      * has none), an open resource as `Resource id #n` and anything else (a

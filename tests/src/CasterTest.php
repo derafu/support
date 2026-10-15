@@ -18,6 +18,7 @@ use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use stdClass;
+use Stringable;
 
 #[CoversClass(Caster::class)]
 class CasterTest extends TestCase
@@ -351,5 +352,111 @@ class CasterTest extends TestCase
             'string null'   => ['null',  null,    'NULL'],
             'plain string'  => ['hello', 'hello', 'string'],
         ];
+    }
+
+    // -------------------------------------------------------------------------
+    // toNumber() and toString()
+    // -------------------------------------------------------------------------
+
+    /**
+     * @return array<string, array{mixed, int|float}>
+     */
+    public static function provideNumbers(): array
+    {
+        return [
+            'integer' => [42, 42],
+            'negative integer' => [-7, -7],
+            'zero' => [0, 0],
+            'float with a fraction' => [1.5, 1.5],
+            'float that is a whole number' => [25.0, 25],
+            'string integer' => ['25', 25],
+            'string with a sign' => ['-3', -3],
+            'string float' => ['1.5', 1.5],
+            'string float that is a whole number' => ['25.0', 25],
+            'string exponent' => ['1e3', 1000],
+            'string with spaces around' => [' 5 ', 5],
+            'whole number too big for an integer' => ['9999999999999999999', 1.0E+19],
+            'float too big for an integer' => [1.0E+25, 1.0E+25],
+            'the biggest integer' => [PHP_INT_MAX, PHP_INT_MAX],
+            'the smallest integer' => [PHP_INT_MIN, PHP_INT_MIN],
+            'negative zero' => [-0.0, 0],
+        ];
+    }
+
+    #[Test]
+    #[DataProvider('provideNumbers')]
+    public function shouldTurnANumberOrANumericStringIntoANumber(mixed $value, int|float $expected): void
+    {
+        $this->assertSame($expected, Caster::toNumber($value));
+    }
+
+    /**
+     * @return array<string, array{mixed}>
+     */
+    public static function provideNotNumbers(): array
+    {
+        return [
+            'null' => [null],
+            'true' => [true],
+            'false' => [false],
+            'empty string' => [''],
+            'text' => ['abc'],
+            'number with text' => ['12abc'],
+            'string true' => ['true'],
+            'string null' => ['null'],
+            'array' => [[1]],
+            'object' => [new stdClass()],
+        ];
+    }
+
+    #[Test]
+    #[DataProvider('provideNotNumbers')]
+    public function shouldNotTurnWhatIsNotANumberIntoANumber(mixed $value): void
+    {
+        $this->assertNull(Caster::toNumber($value));
+    }
+
+    #[Test]
+    public function shouldKeepTheNanAndInfinityAsFloats(): void
+    {
+        $this->assertNan(Caster::toNumber(NAN));
+        $this->assertSame(INF, Caster::toNumber(INF));
+    }
+
+    #[Test]
+    public function shouldTurnTextIntoAString(): void
+    {
+        $text = new class () implements Stringable {
+            public function __toString(): string
+            {
+                return 'its text';
+            }
+        };
+
+        $this->assertSame('abc', Caster::toString('abc'));
+        $this->assertSame('', Caster::toString(''));
+        $this->assertSame('its text', Caster::toString($text));
+    }
+
+    /**
+     * @return array<string, array{mixed}>
+     */
+    public static function provideNotText(): array
+    {
+        return [
+            'null' => [null],
+            'integer' => [5],
+            'float' => [1.5],
+            'true' => [true],
+            'array' => [['a']],
+            'object without text' => [new stdClass()],
+        ];
+    }
+
+    #[Test]
+    #[DataProvider('provideNotText')]
+    public function shouldNotTurnWhatIsNotTextIntoAString(mixed $value): void
+    {
+        $this->assertNull(Caster::toString($value));
     }
 }
