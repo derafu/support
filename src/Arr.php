@@ -75,6 +75,35 @@ final class Arr
     }
 
     /**
+     * Gets the value that is in an array at a path of keys.
+     *
+     * A key whose value is `null` is a value that is there, and `null` is what
+     * is returned. The default is returned when the path does not exist: a key
+     * that is not there, or a level of the path that is not an array.
+     *
+     * @param array<array-key, mixed> $array The array.
+     * @param string|non-empty-list<string> $path Dot notation path ("a.b.c") or
+     * the list of keys.
+     * @param mixed $default What is returned if the path does not exist.
+     * @return mixed The value at the path, or the default.
+     */
+    public static function getAtPath(array $array, string|array $path, mixed $default = null): mixed
+    {
+        $keys = is_string($path) ? explode('.', $path) : $path;
+        $current = $array;
+
+        foreach ($keys as $key) {
+            if (!is_array($current) || !array_key_exists($key, $current)) {
+                return $default;
+            }
+
+            $current = $current[$key];
+        }
+
+        return $current;
+    }
+
+    /**
      * Sets a value in an array, at a path of keys, creating the levels.
      *
      * The array is not modified: the array with the value set is returned. A

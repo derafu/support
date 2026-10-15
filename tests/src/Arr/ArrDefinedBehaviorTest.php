@@ -192,4 +192,29 @@ final class ArrDefinedBehaviorTest extends TestCase
             Arr::treeToList($tree, 'name', 'children')
         );
     }
+
+    #[Test]
+    public function shouldGetTheValueAtAPath(): void
+    {
+        $array = ['a' => ['b' => ['c' => 1, 'null' => null], 'list' => [['x' => 'y']]], 'z' => 0];
+
+        $this->assertSame(1, Arr::getAtPath($array, 'a.b.c'));
+        $this->assertSame(1, Arr::getAtPath($array, ['a', 'b', 'c']));
+        $this->assertSame(['c' => 1, 'null' => null], Arr::getAtPath($array, 'a.b'));
+        $this->assertSame('y', Arr::getAtPath($array, 'a.list.0.x'));
+        $this->assertSame(0, Arr::getAtPath($array, 'z'));
+        $this->assertNull(Arr::getAtPath($array, 'a.b.null', 'default'), 'A key whose value is null is there.');
+    }
+
+    #[Test]
+    public function shouldGetTheDefaultWhenThePathDoesNotExist(): void
+    {
+        $array = ['a' => ['b' => 1], 'text' => 'abc'];
+
+        $this->assertNull(Arr::getAtPath($array, 'a.x'));
+        $this->assertSame('d', Arr::getAtPath($array, 'a.x', 'd'));
+        $this->assertSame('d', Arr::getAtPath($array, 'a.b.c', 'd'), 'A level that is not an array has no keys.');
+        $this->assertSame('d', Arr::getAtPath($array, 'text.0', 'd'), 'A string is not an array.');
+        $this->assertSame('d', Arr::getAtPath($array, 'x.y.z', 'd'));
+    }
 }
