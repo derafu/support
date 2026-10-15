@@ -12,6 +12,7 @@ declare(strict_types=1);
 
 namespace Derafu\Support;
 
+use Derafu\Translation\Exception\Logic\TranslatableInvalidArgumentException as InvalidArgumentException;
 use Stringable;
 
 /**
@@ -113,6 +114,21 @@ final class Caster
     }
 
     /**
+     * Turns a value into a number, like `toNumber()`, or fails if it is not one.
+     *
+     * @param mixed $value The value to turn into a number.
+     * @return int|float The number.
+     * @throws InvalidArgumentException If the value is not a number.
+     */
+    public static function requireNumber(mixed $value): int|float
+    {
+        return self::toNumber($value) ?? throw new InvalidArgumentException([
+            'The value must be a number, {given} given.',
+            'given' => get_debug_type($value),
+        ]);
+    }
+
+    /**
      * Turns a value that is text into a string: a string as it is, and an
      * object that is `Stringable` as its text.
      *
@@ -129,6 +145,22 @@ final class Caster
             $value instanceof Stringable => (string) $value,
             default => null,
         };
+    }
+
+    /**
+     * Turns a value into a string, like `toString()`, or fails if it is not
+     * text.
+     *
+     * @param mixed $value The value to turn into a string.
+     * @return string The string.
+     * @throws InvalidArgumentException If the value is not text.
+     */
+    public static function requireString(mixed $value): string
+    {
+        return self::toString($value) ?? throw new InvalidArgumentException([
+            'The value must be text, {given} given.',
+            'given' => get_debug_type($value),
+        ]);
     }
 
     /**

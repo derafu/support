@@ -13,6 +13,7 @@ declare(strict_types=1);
 namespace Derafu\TestsSupport;
 
 use Derafu\Support\Caster;
+use Derafu\Translation\Exception\Logic\TranslatableInvalidArgumentException;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
@@ -458,5 +459,73 @@ class CasterTest extends TestCase
     public function shouldNotTurnWhatIsNotTextIntoAString(mixed $value): void
     {
         $this->assertNull(Caster::toString($value));
+    }
+
+    #[Test]
+    #[DataProvider('provideNumbers')]
+    public function shouldRequireANumberAndGiveItBack(mixed $value, int|float $expected): void
+    {
+        $this->assertSame($expected, Caster::requireNumber($value));
+    }
+
+    /**
+     * @return array<string, array{mixed, string}>
+     */
+    public static function provideNotNumbersWithTheirType(): array
+    {
+        return [
+            'null' => [null, 'null'],
+            'boolean' => [true, 'bool'],
+            'text' => ['abc', 'string'],
+            'array' => [[1], 'array'],
+            'object' => [new stdClass(), 'stdClass'],
+        ];
+    }
+
+    #[Test]
+    #[DataProvider('provideNotNumbersWithTheirType')]
+    public function shouldFailWhenANumberIsRequiredAndTheValueIsNot(mixed $value, string $given): void
+    {
+        $this->expectException(TranslatableInvalidArgumentException::class);
+        $this->expectExceptionMessage('The value must be a number, ' . $given . ' given.');
+
+        Caster::requireNumber($value);
+    }
+
+    #[Test]
+    public function shouldRequireTextAndGiveItBack(): void
+    {
+        $text = new class () implements Stringable {
+            public function __toString(): string
+            {
+                return 'its text';
+            }
+        };
+
+        $this->assertSame('abc', Caster::requireString('abc'));
+        $this->assertSame('its text', Caster::requireString($text));
+    }
+
+    /**
+     * @return array<string, array{mixed, string}>
+     */
+    public static function provideNotTextWithTheirType(): array
+    {
+        return [
+            'null' => [null, 'null'],
+            'integer' => [5, 'int'],
+            'array' => [['a'], 'array'],
+            'object without text' => [new stdClass(), 'stdClass'],
+        ];
+    }
+
+    #[Test]
+    #[DataProvider('provideNotTextWithTheirType')]
+    public function shouldFailWhenTextIsRequiredAndTheValueIsNot(mixed $value, string $given): void
+    {
+        $this->expectException(TranslatableInvalidArgumentException::class);
+        $this->expectExceptionMessage('The value must be text, ' . $given . ' given.');
+
+        Caster::requireString($value);
     }
 }

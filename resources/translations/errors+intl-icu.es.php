@@ -11,6 +11,12 @@ declare(strict_types=1);
  */
 
 return [
+    // Caster.
+    'The value must be a number, {given} given.' =>
+        'El valor debe ser un número, se entregó {given}.',
+    'The value must be text, {given} given.' =>
+        'El valor debe ser texto, se entregó {given}.',
+
     // ArrayReader and ArrayType.
     'The key "{key}" is required.' =>
         'La clave "{key}" es obligatoria.',
