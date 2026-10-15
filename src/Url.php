@@ -158,7 +158,7 @@ final class Url
         $normalized = preg_replace_callback(
             '/%([0-9A-Fa-f]{2})/',
             static function (array $match): string {
-                $byte = hexdec($match[1]);
+                $byte = (int) hexdec($match[1]);
 
                 // A separator or a control character that is hidden.
                 if ($byte < 0x20 || $byte === 0x7f || $byte === 0x2f || $byte === 0x5c) {
@@ -172,7 +172,7 @@ final class Url
                     || ($byte >= 0x61 && $byte <= 0x7a)
                     || in_array($byte, [0x2d, 0x2e, 0x5f, 0x7e], true)
                 ) {
-                    return chr((int) $byte);
+                    return chr($byte & 0xFF);
                 }
 
                 return '%' . strtoupper($match[1]);

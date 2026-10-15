@@ -12,7 +12,9 @@ declare(strict_types=1);
 
 namespace Derafu\Support;
 
+use Derafu\Translation\Exception\Core\TranslatableRuntimeException as RuntimeException;
 use Derafu\Translation\Exception\Logic\TranslatableInvalidArgumentException as InvalidArgumentException;
+use Stringable;
 
 /**
  * String manipulation and utilities class.
@@ -57,12 +59,21 @@ final class Str
      *   - Python style: %(key)s
      *   - Dollar sign: $key
      *
+     * A key with nested arrays is written with dots (`{{ user.name }}`). A
+     * placeholder whose key is not in the data, or whose value is `null`, is
+     * left as it is. The value of a placeholder is its text: `true` is `1`,
+     * `false` is an empty text and an object that is `Stringable` is its text.
+     * Only the placeholders that are in the template are checked: a value that
+     * is not used can be anything.
+     *
      * @param string $template String containing placeholders.
-     * @param array $data Values to replace placeholders with.
+     * @param array<array-key, mixed> $data Values to replace placeholders with.
      * @param string $style Placeholder style or styles (pipe-separated,
      * default: 'mustache').
      * @return string String with placeholders replaced.
-     * @throws InvalidArgumentException If any style is not supported.
+     * @throws InvalidArgumentException If any style is not supported, or the
+     * value of a placeholder has no text (an object that is not `Stringable`, a
+     * resource).
      */
     public static function format(
         string $template,
@@ -96,14 +107,28 @@ final class Str
 
         // Apply all patterns in sequence.
         foreach ($activePatterns as $pattern) {
-            $template = preg_replace_callback(
+            $template = self::replaced(preg_replace_callback(
                 $pattern,
-                function ($matches) use ($flatData) {
+                function (array $matches) use ($flatData): string {
                     $key = trim($matches[1]);
-                    return $flatData[$key] ?? $matches[0];
+                    $value = $flatData[$key] ?? null;
+
+                    if ($value === null) {
+                        return $matches[0];
+                    }
+
+                    if (!is_scalar($value) && !$value instanceof Stringable) {
+                        throw new InvalidArgumentException([
+                            'The value of "{key}" can not be written as text, {given} given.',
+                            'key' => $key,
+                            'given' => get_debug_type($value),
+                        ]);
+                    }
+
+                    return (string) $value;
                 },
                 $template
-            );
+            ));
         }
 
         return $template;
@@ -118,7 +143,7 @@ final class Str
     public static function studly(string $value): string
     {
         // First convert camelCase to space-separated.
-        $value = preg_replace('/([a-z])([A-Z])/', '$1 $2', $value);
+        $value = self::replaced(preg_replace('/([a-z])([A-Z])/', '$1 $2', $value));
 
         // Then replace delimiters with spaces.
         $value = str_replace(['-', '_'], ' ', $value);
@@ -148,7 +173,7 @@ final class Str
     public static function snake(string $value, string $delimiter = '_'): string
     {
         // Convert camelCase to spaces.
-        $value = preg_replace('/([a-z])([A-Z])/', '$1 $2', $value);
+        $value = self::replaced(preg_replace('/([a-z])([A-Z])/', '$1 $2', $value));
 
         // Replace hyphens and underscores with spaces.
         $value = str_replace(['-', '_'], ' ', $value);
@@ -209,18 +234,18 @@ final class Str
         );
 
         // Remove any character that is not alphanumeric or the separator.
-        $string = preg_replace(
+        $string = self::replaced(preg_replace(
             '/[^a-z0-9' . preg_quote($separator, '/') . ']/',
             '',
             $string
-        );
+        ));
 
         // Replace multiple separators with a single one.
-        $string = preg_replace(
+        $string = self::replaced(preg_replace(
             '/' . preg_quote($separator, '/') . '+/',
             $separator,
             $string
-        );
+        ));
 
         // Remove leading and trailing separators.
         return trim($string, $separator);
@@ -315,8 +340,8 @@ final class Str
      * Splits parameters string handling escaped delimiters.
      *
      * @param string $parametersString String containing parameters.
-     * @param string $delimiter Character used to separate parameters.
-     * @return array Array of parameters.
+     * @param non-empty-string $delimiter Character used to separate parameters.
+     * @return list<string> Array of parameters.
      */
     public static function splitParameters(
         string $parametersString,
@@ -324,11 +349,11 @@ final class Str
     ): array {
         $escapedDelimiter = preg_quote($delimiter, '/');
         $tempMarker = '{{[[DELIMITER]]}}';
-        $tempString = preg_replace(
+        $tempString = self::replaced(preg_replace(
             '/\\\\' . $escapedDelimiter . '/',
             $tempMarker,
             $parametersString
-        );
+        ));
 
         $parts = explode($delimiter, $tempString);
 
@@ -437,5 +462,26 @@ final class Str
     public static function utf8encode(string $input): string
     {
         return Encoding::utf8encode($input);
+    }
+
+    /**
+     * Returns the result of a regular expression replacement, which is `null`
+     * when the expression failed.
+     *
+     * @param string|null $result Result of `preg_replace()` or
+     * `preg_replace_callback()`.
+     * @return string The result.
+     * @throws RuntimeException If the replacement failed.
+     */
+    private static function replaced(?string $result): string
+    {
+        if ($result === null) {
+            throw new RuntimeException([
+                'Regular expression error: {error}.',
+                'error' => preg_last_error_msg(),
+            ]);
+        }
+
+        return $result;
     }
 }

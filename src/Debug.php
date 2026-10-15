@@ -29,7 +29,7 @@ final class Debug
      *
      * @param mixed $var Variable to inspect.
      * @param string|null $label Variable label (usually its name).
-     * @return array Debug information collected.
+     * @return array{label: string, type: string, length: int|null, file: string|null, line: int|null, caller: string, timestamp: float, memory_usage: int, value: string|false|null} Debug information collected.
      */
     public static function inspect(mixed $var, ?string $label = null): array
     {
@@ -63,7 +63,7 @@ final class Debug
      *
      * @param mixed $var Variable to inspect.
      * @param string|null $label Variable label.
-     * @return array Debug information collected.
+     * @return array{label: string, type: string, length: int|null, file: string|null, line: int|null, caller: string, timestamp: float, memory_usage: int, value: string|false|null} Debug information collected.
      */
     private static function collect(mixed $var, ?string $label): array
     {

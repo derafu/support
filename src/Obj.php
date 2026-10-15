@@ -26,9 +26,10 @@ final class Obj
     /**
      * Fills public properties of an object with data from an array.
      *
-     * @param object $instance Object instance to fill.
-     * @param array $data Data to populate the object with.
-     * @return object The filled object instance.
+     * @template T of object
+     * @param T $instance Object instance to fill.
+     * @param array<string, mixed> $data Data to populate the object with.
+     * @return T The filled object instance.
      */
     public static function fill(object $instance, array $data): object
     {
@@ -75,7 +76,7 @@ final class Obj
      * Creates a ReflectionClass instance for an object.
      *
      * @param object $instance Object instance.
-     * @return ReflectionClass Reflection of the object's class.
+     * @return ReflectionClass<object> Reflection of the object's class.
      */
     public static function getReflection(object $instance): ReflectionClass
     {
@@ -106,7 +107,7 @@ final class Obj
      * Gets an array of all public property values.
      *
      * @param object $instance Object instance.
-     * @return array Array of property values.
+     * @return array<string, mixed> Array of property values.
      */
     public static function getPublicValues(object $instance): array
     {

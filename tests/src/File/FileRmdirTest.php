@@ -16,6 +16,7 @@ use Derafu\Support\File;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use RuntimeException;
 
 #[CoversClass(File::class)]
 class FileRmdirTest extends TestCase
@@ -71,5 +72,30 @@ class FileRmdirTest extends TestCase
         $this->assertFalse(file_exists($testDir));
         $this->assertFileExists($outside . '/precious.txt');
         $this->assertSame('keep', file_get_contents($outside . '/precious.txt'));
+    }
+
+    #[Test]
+    public function shouldDoNothingWhenTheDirectoryDoesNotExist(): void
+    {
+        File::rmdir($this->tempDir . '/does-not-exist');
+
+        $this->assertDirectoryDoesNotExist($this->tempDir . '/does-not-exist');
+    }
+
+    #[Test]
+    public function shouldFailWhenTheDirectoryCanNotBeRemoved(): void
+    {
+        $locked = $this->tempDir . '/locked';
+        mkdir($locked . '/inside', 0777, true);
+        chmod($locked, 0555);
+
+        try {
+            $this->expectException(RuntimeException::class);
+            $this->expectExceptionMessage('Failed to remove directory ' . $locked . '/inside: ');
+
+            File::rmdir($locked . '/inside');
+        } finally {
+            chmod($locked, 0755);
+        }
     }
 }

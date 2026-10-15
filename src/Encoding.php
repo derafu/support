@@ -12,6 +12,9 @@ declare(strict_types=1);
 
 namespace Derafu\Support;
 
+use Derafu\Translation\Exception\Core\TranslatableLogicException as LogicException;
+use ReflectionProperty;
+
 /**
  * Encoding utilities.
  *
@@ -24,8 +27,15 @@ final class Encoding
      *
      * Only converts strings that are actually UTF-8 encoded.
      *
+     * An object is converted in place and the same instance is returned. Only
+     * its public properties are converted: the protected and private ones are
+     * not touched, and an object that is only iterable (`ArrayObject`) is not
+     * converted by its elements.
+     *
      * @param mixed $input
-     * @return mixed
+     * @return ($input is string ? string : mixed) A string if a string was given.
+     * @throws LogicException If an object has a public property that is
+     * readonly, which can not be converted.
      */
     public static function utf8decode(mixed $input): mixed
     {
@@ -45,10 +55,7 @@ final class Encoding
         }
 
         if (is_object($input)) {
-            foreach ($input as $key => $value) {
-                $input->$key = self::utf8decode($value);
-            }
-            return $input;
+            return self::convertProperties($input, self::utf8decode(...));
         }
 
         return $input;
@@ -62,8 +69,15 @@ final class Encoding
      * valid UTF-8 sequence (`Ã±`, for example) can not be told from UTF-8, so it
      * is not converted either.
      *
+     * An object is converted in place and the same instance is returned. Only
+     * its public properties are converted: the protected and private ones are
+     * not touched, and an object that is only iterable (`ArrayObject`) is not
+     * converted by its elements.
+     *
      * @param mixed $input
-     * @return mixed
+     * @return ($input is string ? string : mixed) A string if a string was given.
+     * @throws LogicException If an object has a public property that is
+     * readonly, which can not be converted.
      */
     public static function utf8encode(mixed $input): mixed
     {
@@ -90,12 +104,35 @@ final class Encoding
         }
 
         if (is_object($input)) {
-            foreach ($input as $key => $value) {
-                $input->$key = self::utf8encode($value);
-            }
-            return $input;
+            return self::convertProperties($input, self::utf8encode(...));
         }
 
         return $input;
+    }
+
+    /**
+     * Converts in place the public properties of an object.
+     *
+     * @template T of object
+     * @param T $object The object.
+     * @param callable(mixed): mixed $convert Converts the value of a property.
+     * @return T The same object.
+     * @throws LogicException If a public property is readonly.
+     */
+    private static function convertProperties(object $object, callable $convert): object
+    {
+        foreach (get_object_vars($object) as $property => $value) {
+            if ((new ReflectionProperty($object, (string) $property))->isReadOnly()) {
+                throw new LogicException([
+                    'Cannot convert the property "{property}" of {class}: it is readonly.',
+                    'property' => $property,
+                    'class' => $object::class,
+                ]);
+            }
+
+            $object->$property = $convert($value);
+        }
+
+        return $object;
     }
 }

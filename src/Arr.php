@@ -12,8 +12,10 @@ declare(strict_types=1);
 
 namespace Derafu\Support;
 
+use Derafu\Translation\Exception\Core\TranslatableRuntimeException as RuntimeException;
 use Derafu\Translation\Exception\Logic\TranslatableInvalidArgumentException as InvalidArgumentException;
 use SimpleXMLElement;
+use Stringable;
 
 /**
  * Array manipulation and utility class.
@@ -28,9 +30,9 @@ final class Arr
      * Flattens a multi-dimensional array into a single level array with dot
      * notation keys.
      *
-     * @param array $array The array to flatten.
+     * @param array<array-key, mixed> $array The array to flatten.
      * @param string $prefix The prefix to use for flattened keys.
-     * @return array The flattened array.
+     * @return array<array-key, mixed> The flattened array.
      */
     public static function dot(array $array, string $prefix = ''): array
     {
@@ -51,31 +53,56 @@ final class Arr
      * Converts a flat array with dot notation keys back to a multi-dimensional
      * array.
      *
-     * @param array $array The flat array with dot notation keys.
-     * @return array The multi-dimensional array.
+     * Keys that are integers have no dots, so they are kept as they are. If a
+     * key needs a level that already has a value that is not an array, that
+     * value is replaced by the new array.
+     *
+     * @param array<array-key, mixed> $array The flat array with dot notation keys.
+     * @return array<array-key, mixed> The multi-dimensional array.
      */
     public static function nested(array $array): array
     {
         $result = [];
         foreach ($array as $key => $value) {
-            if (str_contains($key, '.')) {
-                $keys = explode('.', $key);
-                $current = &$result;
-
-                foreach ($keys as $k) {
-                    if (!isset($current[$k]) || !is_array($current[$k])) {
-                        $current[$k] = [];
-                    }
-                    $current = &$current[$k];
-                }
-
-                $current = $value;
+            if (str_contains((string) $key, '.')) {
+                $result = self::setAtPath($result, (string) $key, $value);
             } else {
                 $result[$key] = $value;
             }
         }
 
         return $result;
+    }
+
+    /**
+     * Sets a value in an array, at a path of keys, creating the levels.
+     *
+     * The array is not modified: the array with the value set is returned. A
+     * level of the path that exists and is not an array is replaced by an
+     * array.
+     *
+     * @param array<array-key, mixed> $array The array.
+     * @param string|non-empty-list<string> $path Dot notation path ("a.b.c") or
+     * the list of keys.
+     * @param mixed $value The value to set at the end of the path.
+     * @return array<array-key, mixed> The array with the value set.
+     */
+    public static function setAtPath(array $array, string|array $path, mixed $value): array
+    {
+        $keys = is_string($path) ? explode('.', $path) : $path;
+        $key = $keys[0];
+        $rest = array_slice($keys, 1);
+
+        if ($rest === []) {
+            $array[$key] = $value;
+
+            return $array;
+        }
+
+        $child = isset($array[$key]) && is_array($array[$key]) ? $array[$key] : [];
+        $array[$key] = self::setAtPath($child, $rest, $value);
+
+        return $array;
     }
 
     /**
@@ -87,9 +114,9 @@ final class Arr
      *   - Converts numeric strings to their appropriate type (int or float).
      *   - Can replace empty strings with a specified value.
      *
-     * @param array $array The array to process.
+     * @param array<array-key, mixed> $array The array to process.
      * @param mixed $emptyValue Value to use for empty strings.
-     * @return array The processed array with cast values.
+     * @return array<array-key, mixed> The processed array with cast values.
      */
     public static function cast(array $array, mixed $emptyValue = ''): array
     {
@@ -114,33 +141,62 @@ final class Arr
      * Ensures that the value at a specific path in an array is an array with
      * numeric indexes (not an associative array).
      *
-     * @param array $array The input array.
+     * If any key of the path does not exist, or a level of the path is not an
+     * array (so it can not have the next key), the array is left as it is.
+     *
+     * @param array<array-key, mixed> $array The input array.
      * @param string $path Dot notation path to the target location.
      * @return void
      */
     public static function ensureArrayAtPath(array &$array, string $path): void
     {
-        $keys = explode('.', $path);
-        $current = &$array;
+        $array = self::wrapAtPath($array, $path);
+    }
 
-        foreach ($keys as $key) {
-            if (!isset($current[$key])) {
-                return;
+    /**
+     * Wraps in an array the value at a path of keys, if it is not a list.
+     *
+     * The array is not modified: the array with the value wrapped is returned.
+     * If any key of the path does not exist, or a level of the path is not an
+     * array, the array is returned as it is.
+     *
+     * @param array<array-key, mixed> $array The array.
+     * @param string|non-empty-list<string> $path Dot notation path ("a.b.c") or
+     * the list of keys.
+     * @return array<array-key, mixed> The array.
+     */
+    public static function wrapAtPath(array $array, string|array $path): array
+    {
+        $keys = is_string($path) ? explode('.', $path) : $path;
+        $key = $keys[0];
+        if (!isset($array[$key])) {
+            return $array;
+        }
+
+        $rest = array_slice($keys, 1);
+        $value = $array[$key];
+
+        if ($rest !== []) {
+            if (is_array($value)) {
+                $array[$key] = self::wrapAtPath($value, $rest);
             }
-            $current = &$current[$key];
+
+            return $array;
         }
 
-        if (!is_array($current) || (!empty($current) && !isset($current[0]))) {
-            $current = [$current];
+        if (!is_array($value) || ($value !== [] && !isset($value[0]))) {
+            $array[$key] = [$value];
         }
+
+        return $array;
     }
 
     /**
      * Ensure an ID attribute in each array element using the array key.
      *
-     * @param array<int|string,array> $data Array of arrays.
+     * @param array<int|string, array<array-key, mixed>> $data Array of arrays.
      * @param string $idField Name of the field to store the ID.
-     * @return array The modified array with IDs added.
+     * @return array<int|string, array<array-key, mixed>> The modified array with IDs added.
      */
     public static function ensureIdInElements(array $data, string $idField): array
     {
@@ -160,9 +216,9 @@ final class Arr
     /**
      * Generates all possible subsets of an array with a minimum length.
      *
-     * @param array $array Input array.
+     * @param list<mixed> $array Input array.
      * @param int $minLength Minimum length for subsets.
-     * @return array Array of all possible subsets.
+     * @return list<list<mixed>> Array of all possible subsets.
      */
     public static function subsets(array $array, int $minLength = 1): array
     {
@@ -195,11 +251,11 @@ final class Arr
      * item that does not have the field of the parent is skipped, with
      * everything below it.
      *
-     * @param array $items Array of items, by their identifier.
+     * @param array<array-key, array<array-key, mixed>> $items Array of items, by their identifier.
      * @param string $parentField Name of the field containing the key of the parent.
      * @param string $childrenField Name of the field to store children.
      * @param mixed $parentId Value of the parent field for root level items.
-     * @return array The hierarchical tree.
+     * @return array<array-key, array<array-key, mixed>> The hierarchical tree.
      */
     public static function toTree(
         array $items,
@@ -237,12 +293,17 @@ final class Arr
      * Each one has only its name (`name`, from `$nameField`) and its `level`
      * (0 for the root).
      *
-     * @param array $tree The tree structure.
+     * An item that is not an array, or that does not have the name field (or has
+     * it as `null`), is skipped, with everything below it. If `$childrenField` of an item is
+     * not an array (a string, for example) the item is listed but its
+     * children are silently omitted.
+     *
+     * @param array<array-key, mixed> $tree The tree structure.
      * @param string $nameField Field containing the item name.
      * @param string $childrenField Field containing child items.
      * @param int $level Current level (used internally).
-     * @param array $result Accumulated result (used internally).
-     * @return array The flattened list with level information.
+     * @param array<array-key, array{name: mixed, level: int}> $result Accumulated result (used internally).
+     * @return array<array-key, array{name: mixed, level: int}> The flattened list with level information.
      */
     public static function treeToList(
         array $tree,
@@ -252,7 +313,7 @@ final class Arr
         array &$result = []
     ): array {
         foreach ($tree as $key => $item) {
-            if (!isset($item[$nameField])) {
+            if (!is_array($item) || !isset($item[$nameField])) {
                 continue;
             }
 
@@ -261,9 +322,10 @@ final class Arr
                 'level' => $level,
             ];
 
-            if (!empty($item[$childrenField])) {
+            $children = $item[$childrenField] ?? null;
+            if (is_array($children) && $children !== []) {
                 self::treeToList(
-                    $item[$childrenField],
+                    $children,
                     $nameField,
                     $childrenField,
                     $level + 1,
@@ -293,9 +355,13 @@ final class Arr
      *     ['key1' => 3, 'key2' => 6],
      *   ]
      *
-     * @param array $array The grouped array to transform.
-     * @param array|null $keys Specific keys to extract (null for all keys).
-     * @return array The resulting table array.
+     * A key that is requested and is not in the array is in every row with the
+     * value `null`. The number of rows is the one of the longest group that is
+     * there: if none of the keys is there, there are no rows.
+     *
+     * @param array<array-key, array<int, mixed>> $array The grouped array to transform.
+     * @param list<array-key>|null $keys Specific keys to extract (null for all keys).
+     * @return list<array<array-key, mixed>> The resulting table array.
      */
     public static function groupToTable(array $array, ?array $keys = null): array
     {
@@ -305,10 +371,11 @@ final class Arr
         }
 
         // Find the maximum length among all groups.
-        $maxLength = max(array_map(
+        $lengths = array_map(
             'count',
             array_intersect_key($array, array_flip($keys))
-        ));
+        );
+        $maxLength = $lengths === [] ? 0 : max($lengths);
 
         $result = [];
         for ($i = 0; $i < $maxLength; $i++) {
@@ -325,9 +392,16 @@ final class Arr
     /**
      * Converts a table of N rows and 2 columns into an associative array.
      *
-     * @param array $table The table to convert, where each row has exactly 2 columns.
-     * @return array The resulting associative array.
-     * @throws InvalidArgumentException If any row doesn't have exactly 2 columns.
+     * The first column of each row is the key and the second one the value. The
+     * key can be any scalar or `null`: an integer is kept, and any other one is
+     * turned into a string (`null` is `""`, `true` is `"1"`, `2.7` is `"2.7"`),
+     * which PHP then uses as a key as it does with any array (`"3"` is `3`). A
+     * key that is an array or an object can not be a key and is an error.
+     *
+     * @param array<array-key, mixed> $table The table to convert, where each row has exactly 2 columns.
+     * @return array<array-key, mixed> The resulting associative array.
+     * @throws InvalidArgumentException If any row doesn't have exactly 2 columns
+     * or its first column can not be a key.
      */
     public static function tableToAssociative(array $table): array
     {
@@ -339,7 +413,14 @@ final class Arr
                     'index' => $index,
                 ]);
             }
-            $result[array_shift($row)] = array_shift($row);
+            $key = array_shift($row);
+            if (!is_scalar($key) && $key !== null) {
+                throw new InvalidArgumentException([
+                    'The first column of row {index} must be a scalar or null to be a key.',
+                    'index' => $index,
+                ]);
+            }
+            $result[is_int($key) ? $key : (string) $key] = array_shift($row);
         }
 
         return $result;
@@ -348,9 +429,11 @@ final class Arr
     /**
      * Converts an array to XML.
      *
-     * @param array $array The array to convert.
+     * @param array<array-key, mixed> $array The array to convert.
      * @param string $rootElement The name of the root XML element.
      * @return string The XML string.
+     * @throws InvalidArgumentException If a value can not be written as XML text.
+     * @throws RuntimeException If the XML can not be generated.
      */
     public static function toXml(array $array, string $rootElement = 'root'): string
     {
@@ -359,15 +442,22 @@ final class Arr
         );
         self::arrayToXml($array, $xml);
 
-        return $xml->asXML();
+        return $xml->asXML() ?: throw new RuntimeException('Failed to generate the XML.');
     }
 
     /**
      * Helper method to convert array to XML recursively.
      *
-     * @param array $array Array to convert.
+     * A value that is an array is a child element, with its own children. Any
+     * other value is the text of the element: strings, integers and floats as
+     * they are, `true` as `1`, `false` and `null` as an empty element, and an
+     * object that is `Stringable` as its text. A value that has no text (any
+     * other object, a resource) is an error.
+     *
+     * @param array<array-key, mixed> $array Array to convert.
      * @param \SimpleXMLElement $xml XML element being built.
      * @return void
+     * @throws InvalidArgumentException If a value can not be written as text.
      */
     private static function arrayToXml(array $array, \SimpleXMLElement $xml): void
     {
@@ -377,8 +467,14 @@ final class Arr
             if (is_array($value)) {
                 $child = $xml->addChild($key);
                 self::arrayToXml($value, $child);
+            } elseif (is_scalar($value) || $value === null || $value instanceof Stringable) {
+                $xml->addChild($key, htmlspecialchars((string) $value));
             } else {
-                $xml->addChild($key, htmlspecialchars((string)$value));
+                throw new InvalidArgumentException([
+                    'The value of "{key}" can not be written as XML text, {given} given.',
+                    'key' => $key,
+                    'given' => get_debug_type($value),
+                ]);
             }
         }
     }

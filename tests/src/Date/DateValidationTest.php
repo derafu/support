@@ -43,6 +43,9 @@ class DateValidationTest extends TestCase
         $this->assertSame($expected, $result);
     }
 
+    /**
+     * @return array<array-key, array<int, mixed>>
+     */
     public static function provideValidationData(): array
     {
         return [
@@ -90,6 +93,9 @@ class DateValidationTest extends TestCase
         $this->assertSame($expected, $result);
     }
 
+    /**
+     * @return array<array-key, array<int, mixed>>
+     */
     public static function provideValidateAndConvertData(): array
     {
         return [

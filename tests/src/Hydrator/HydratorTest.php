@@ -49,8 +49,7 @@ class HydratorTest extends TestCase
         $data = ['privateProperty' => 'private value'];
 
         $object = new class () {
-            /** @phpstan-ignore-next-line */
-            private string $privateProperty;
+            private string $privateProperty = '';
 
             public function getPrivateProperty(): string
             {
@@ -117,6 +116,9 @@ class HydratorTest extends TestCase
         $data = ['customField' => 'custom value'];
 
         $object = new class () {
+            /**
+                         * @var array<string, mixed>
+                         */
             private array $attributes = [];
 
             public function setAttribute(string $key, mixed $value): void
@@ -141,8 +143,12 @@ class HydratorTest extends TestCase
         $data = ['nonexistentProperty' => 'value'];
 
         $object = new class () {
-            /** @phpstan-ignore-next-line */
-            private string $otherProperty;
+            private string $otherProperty = '';
+
+            public function getOtherProperty(): string
+            {
+                return $this->otherProperty;
+            }
         };
 
         $this->expectException(LogicException::class);
@@ -168,7 +174,7 @@ class HydratorTest extends TestCase
     public function shouldFailOnInvalidClass(): void
     {
         $this->expectException(LogicException::class);
-        /** @phpstan-ignore-next-line */
+        // @phpstan-ignore argument.type (a class that does not exist, on purpose)
         Hydrator::createAndHydrate('NonExistentClass', []);
     }
 
@@ -208,6 +214,9 @@ class HydratorTest extends TestCase
         ];
 
         $object = new class () {
+            /**
+                         * @var array<string, mixed>
+                         */
             public array $parent;
         };
 
@@ -235,8 +244,8 @@ class HydratorTest extends TestCase
 
         $result = Hydrator::hydrate($object, $data);
 
-        $this->assertIsInt($result->intValue);
-        $this->assertIsFloat($result->floatValue);
-        $this->assertIsBool($result->boolValue);
+        $this->assertSame(42, $result->intValue);
+        $this->assertSame(3.14, $result->floatValue);
+        $this->assertTrue($result->boolValue);
     }
 }

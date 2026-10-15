@@ -34,6 +34,9 @@ class DateCountTest extends TestCase
         parent::tearDown();
     }
 
+    /**
+     * @param list<string> $days
+     */
     #[Test]
     #[DataProvider('provideCountDaysMatchData')]
     public function shouldCountMatchingDays(
@@ -47,6 +50,9 @@ class DateCountTest extends TestCase
         $this->assertSame($expected, $result);
     }
 
+    /**
+     * @return array<array-key, array<int, mixed>>
+     */
     public static function provideCountDaysMatchData(): array
     {
         return [
@@ -107,6 +113,9 @@ class DateCountTest extends TestCase
         }
     }
 
+    /**
+     * @return array<array-key, array<int, mixed>>
+     */
     public static function provideCountData(): array
     {
         return [
@@ -157,6 +166,9 @@ class DateCountTest extends TestCase
         }
     }
 
+    /**
+     * @return array<array-key, array<int, mixed>>
+     */
     public static function provideCountMonthsData(): array
     {
         return [

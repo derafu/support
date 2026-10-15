@@ -44,6 +44,9 @@ class DateCalendarTest extends TestCase
         $this->assertSame($expected, $result->format('Y-m-d'));
     }
 
+    /**
+     * @return array<array-key, array<int, mixed>>
+     */
     public static function provideSerialNumberData(): array
     {
         // The numbers are the ones that Excel gives to those dates.
@@ -105,6 +108,9 @@ class DateCalendarTest extends TestCase
         $this->assertSame($expected, Date::nextDate($date, $unit, $steps)->format('Y-m-d'));
     }
 
+    /**
+     * @return array<array-key, array<int, mixed>>
+     */
     public static function provideNextDateData(): array
     {
         return [
@@ -139,6 +145,9 @@ class DateCalendarTest extends TestCase
         $this->assertSame($expected, Date::previousDate($date, $unit, $steps)->format('Y-m-d'));
     }
 
+    /**
+     * @return array<array-key, array<int, mixed>>
+     */
     public static function providePreviousDateData(): array
     {
         return [
@@ -179,6 +188,7 @@ class DateCalendarTest extends TestCase
     public function shouldNotChangeTheDateThatIsGiven(): void
     {
         $date = Carbon::create(2024, 1, 31, 10, 30);
+        $this->assertInstanceOf(Carbon::class, $date);
 
         $next = Date::nextDate($date, 'M');
         $previous = Date::previousDate($date, 'Y', 2);
@@ -212,6 +222,9 @@ class DateCalendarTest extends TestCase
         }
     }
 
+    /**
+     * @return array<array-key, array<int, mixed>>
+     */
     public static function provideWeekBoundariesData(): array
     {
         return [
@@ -238,6 +251,9 @@ class DateCalendarTest extends TestCase
         ];
     }
 
+    /**
+     * @param array<array-key, mixed> $expected
+     */
     #[Test]
     #[DataProvider('provideYearsData')]
     public function shouldGenerateYears(
@@ -257,6 +273,9 @@ class DateCalendarTest extends TestCase
         }
     }
 
+    /**
+     * @return array<array-key, array<int, mixed>>
+     */
     public static function provideYearsData(): array
     {
         return [

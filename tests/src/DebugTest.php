@@ -22,6 +22,9 @@ use stdClass;
 #[CoversClass(Debug::class)]
 class DebugTest extends TestCase
 {
+    /**
+     * @param array<array-key, mixed> $expected
+     */
     #[Test]
     #[DataProvider('provideInspectData')]
     public function shouldInspectVariable(mixed $var, ?string $label, array $expected): void
@@ -55,11 +58,13 @@ class DebugTest extends TestCase
         );
 
         // Verify timestamp and memory usage.
-        $this->assertIsFloat($result['timestamp']);
-        $this->assertIsInt($result['memory_usage']);
+        $this->assertGreaterThan(0.0, $result['timestamp']);
+        $this->assertGreaterThan(0, $result['memory_usage']);
 
         // Verify value matches expected format.
         if (isset($expected['value_pattern'])) {
+            $this->assertIsString($expected['value_pattern']);
+            $this->assertIsString($result['value']);
             $this->assertMatchesRegularExpression(
                 $expected['value_pattern'],
                 $result['value']
@@ -67,6 +72,9 @@ class DebugTest extends TestCase
         }
     }
 
+    /**
+     * @return array<array-key, array<int, mixed>>
+     */
     public static function provideInspectData(): array
     {
         $obj = new stdClass();
@@ -155,7 +163,7 @@ class DebugTest extends TestCase
         $testVar = ['test' => 'value'];
         Debug::print($testVar, 'testVar');
 
-        $output = ob_get_clean();
+        $output = (string) ob_get_clean();
 
         // Verify output format.
         $this->assertStringContainsString('<pre>', $output);
@@ -179,6 +187,7 @@ class DebugTest extends TestCase
         $this->assertSame('recursive', $result['label']);
         $this->assertSame('array', $result['type']);
         $this->assertSame(1, $result['length']);
+        $this->assertIsString($result['value']);
         $this->assertStringContainsString('*RECURSION*', $result['value']);
     }
 
@@ -186,12 +195,14 @@ class DebugTest extends TestCase
     public function shouldHandleResources(): void
     {
         $resource = fopen('php://memory', 'r');
+        $this->assertIsResource($resource);
 
         $result = Debug::inspect($resource, 'resource');
 
         $this->assertSame('resource', $result['label']);
         $this->assertSame('resource', $result['type']);
         $this->assertNull($result['length']);
+        $this->assertIsString($result['value']);
         $this->assertStringContainsString('Resource', $result['value']);
 
         fclose($resource);
@@ -206,6 +217,7 @@ class DebugTest extends TestCase
 
         $this->assertSame('string', $result['type']);
         $this->assertSame(1000, $result['length']);
+        $this->assertIsString($result['value']);
         $this->assertSame(1000, strlen($result['value']));
     }
 
@@ -252,10 +264,33 @@ echo json_encode(["global" => $global, "function" => $function]);
         // Without warnings or notices, the output is only the JSON.
         $result = json_decode($output, true);
         $this->assertIsArray($result, $output);
-        $this->assertSame('{main}', $result['global']['caller']);
-        $this->assertSame($script, $result['global']['file']);
-        $this->assertSame(4, $result['global']['line']);
-        $this->assertSame('inAFunction()', $result['function']['caller']);
-        $this->assertSame(3, $result['function']['line']);
+        $global = $result['global'] ?? null;
+        $function = $result['function'] ?? null;
+        $this->assertIsArray($global);
+        $this->assertIsArray($function);
+        $this->assertSame('{main}', $global['caller']);
+        $this->assertSame($script, $global['file']);
+        $this->assertSame(4, $global['line']);
+        $this->assertSame('inAFunction()', $function['caller']);
+        $this->assertSame(3, $function['line']);
     }
+
+    #[Test]
+    public function shouldNameTheFunctionThatCalledItWhenThereIsNoClass(): void
+    {
+        $this->assertSame(
+            'Derafu\\TestsSupport\\inspectFromAFunction()',
+            inspectFromAFunction('value')['caller']
+        );
+    }
+}
+
+/**
+ * Calls `Debug::inspect()` from a function that is not in a class.
+ *
+ * @return array{caller: string}
+ */
+function inspectFromAFunction(mixed $value): array
+{
+    return ['caller' => Debug::inspect($value)['caller']];
 }

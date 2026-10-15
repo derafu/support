@@ -30,9 +30,10 @@ final class Factory
      * For non-stdClass instances, uses Hydrator to populate the object.
      *
      * @template T of object
-     * @param array $data Data to populate the object with.
+     * @param array<string, mixed> $data Data to populate the object with.
      * @param class-string<T>|null $class Class to instantiate (null for stdClass).
-     * @return T The instantiated and populated object.
+     * @return ($class is null ? stdClass : T) The instantiated and populated
+     * object, a stdClass if no class was given.
      * @throws LogicException If object creation fails.
      */
     public static function create(array $data, ?string $class = null): object
@@ -50,9 +51,10 @@ final class Factory
      * Creates multiple instances of a class from an array of data sets.
      *
      * @template T of object
-     * @param array $dataSet Array of data arrays, each used to create one instance.
+     * @param array<array-key, array<string, mixed>> $dataSet Array of data arrays, each used to create one instance.
      * @param class-string<T>|null $class Class to instantiate (null for stdClass).
-     * @return array<T> Array of instantiated and populated objects.
+     * @return array<array-key, T|stdClass> Array of instantiated and populated
+     * objects, stdClass if no class was given.
      * @throws LogicException If any object creation fails.
      */
     public static function createMany(array $dataSet, ?string $class = null): array
@@ -67,7 +69,7 @@ final class Factory
      * Creates an instance and ensures it's of a specific type.
      *
      * @template T of object
-     * @param array $data Data to populate the object with.
+     * @param array<string, mixed> $data Data to populate the object with.
      * @param class-string<T> $class Class to instantiate.
      * @param class-string<T> $expectedType Class that the instance must be.
      * @return T The instantiated and populated object.

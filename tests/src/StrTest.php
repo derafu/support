@@ -15,10 +15,15 @@ namespace Derafu\TestsSupport;
 use Derafu\Support\Arr;
 use Derafu\Support\Encoding;
 use Derafu\Support\Str;
+use Derafu\Translation\Exception\Core\TranslatableRuntimeException;
+use Derafu\Translation\Exception\Logic\TranslatableInvalidArgumentException;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\RunInSeparateProcess;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use stdClass;
+use Stringable;
 
 #[CoversClass(Str::class)]
 #[CoversClass(Arr::class)]
@@ -38,6 +43,9 @@ class StrTest extends TestCase
         $this->assertSame($expected, $result);
     }
 
+    /**
+     * @return array<array-key, array<int, mixed>>
+     */
     public static function provideWordWrapData(): array
     {
         return [
@@ -108,6 +116,9 @@ class StrTest extends TestCase
         $this->assertSame($expected, $result);
     }
 
+    /**
+     * @return array<array-key, array<int, mixed>>
+     */
     public static function provideStudlyCaseData(): array
     {
         return [
@@ -158,6 +169,9 @@ class StrTest extends TestCase
         $this->assertSame($expected, $result);
     }
 
+    /**
+     * @return array<array-key, array<int, mixed>>
+     */
     public static function provideCamelCaseData(): array
     {
         return [
@@ -207,6 +221,9 @@ class StrTest extends TestCase
         $this->assertSame($expected, $result);
     }
 
+    /**
+     * @return array<array-key, array<int, mixed>>
+     */
     public static function provideSnakeCaseData(): array
     {
         return [
@@ -269,6 +286,9 @@ class StrTest extends TestCase
         );
     }
 
+    /**
+     * @param array<array-key, mixed> $data
+     */
     #[Test]
     #[DataProvider('providePlaceholderData')]
     public function shouldFormat(
@@ -280,6 +300,45 @@ class StrTest extends TestCase
         $this->assertSame($expected, $result);
     }
 
+    #[Test]
+    public function shouldWriteTheValuesThatHaveTextAndLeaveTheOthers(): void
+    {
+        $text = new class () implements Stringable {
+            public function __toString(): string
+            {
+                return 'S';
+            }
+        };
+
+        $this->assertSame(
+            '1|[]|S|{{ none }}|{{ nothing }}|{{ list }}|2',
+            Str::format(
+                '{{ yes }}|[{{ no }}]|{{ text }}|{{ none }}|{{ nothing }}|{{ list }}|{{ nested.key }}',
+                [
+                    'yes' => true,
+                    'no' => false,
+                    'text' => $text,
+                    'none' => null,
+                    'list' => [],
+                    'nested' => ['key' => 2],
+                    'unused' => new stdClass(),
+                ]
+            )
+        );
+    }
+
+    #[Test]
+    public function shouldRejectAPlaceholderWhoseValueHasNoText(): void
+    {
+        $this->expectException(TranslatableInvalidArgumentException::class);
+        $this->expectExceptionMessage('The value of "object" can not be written as text, stdClass given.');
+
+        Str::format('{{ object }}', ['object' => new stdClass()]);
+    }
+
+    /**
+     * @return array<array-key, array<int, mixed>>
+     */
     public static function providePlaceholderData(): array
     {
         return [
@@ -321,6 +380,9 @@ class StrTest extends TestCase
         $this->assertSame($expected, $result);
     }
 
+    /**
+     * @return array<array-key, array<int, mixed>>
+     */
     public static function provideSlugData(): array
     {
         return [
@@ -347,6 +409,9 @@ class StrTest extends TestCase
         ];
     }
 
+    /**
+     * @param array<array-key, mixed> $expected
+     */
     #[Test]
     #[DataProvider('provideExtractData')]
     public function shouldExtractSubstrings(
@@ -360,6 +425,9 @@ class StrTest extends TestCase
         $this->assertSame($expected, $result);
     }
 
+    /**
+     * @return array<array-key, array<int, mixed>>
+     */
     public static function provideExtractData(): array
     {
         return [
@@ -414,6 +482,9 @@ class StrTest extends TestCase
         $this->assertTrue(mb_check_encoding($decoded, 'ISO-8859-1'));
     }
 
+    /**
+     * @return array<array-key, array<int, mixed>>
+     */
     public static function provideEncodingData(): array
     {
         return [
@@ -485,6 +556,9 @@ class StrTest extends TestCase
         $this->assertMatchesRegularExpression($pattern, $result);
     }
 
+    /**
+     * @return array<array-key, array<int, mixed>>
+     */
     public static function provideRandomData(): array
     {
         return [
@@ -517,5 +591,106 @@ class StrTest extends TestCase
                 '/^[a-zA-Z0-9!@#$%^&*()_+\-=\[\]{}|;:,.<>?]{15}$/',
             ],
         ];
+    }
+
+    // -------------------------------------------------------------------------
+    // pad(), extract() and splitParameters()
+    // -------------------------------------------------------------------------
+
+    /**
+     * @return array<string, array{string, int, string, int, string}>
+     */
+    public static function providePadData(): array
+    {
+        return [
+            'right by default' => ['ab', 5, '-', STR_PAD_RIGHT, 'ab---'],
+            'left' => ['ab', 5, '-', STR_PAD_LEFT, '---ab'],
+            'both, even' => ['ab', 6, '-', STR_PAD_BOTH, '--ab--'],
+            'both, odd gives the extra one to the right' => ['ab', 5, '-', STR_PAD_BOTH, '-ab--'],
+            'multibyte counts characters' => ['ñu', 4, '*', STR_PAD_LEFT, '**ñu'],
+            'already long enough' => ['abcd', 3, '-', STR_PAD_RIGHT, 'abcd'],
+            'same length' => ['abc', 3, '-', STR_PAD_LEFT, 'abc'],
+        ];
+    }
+
+    #[Test]
+    #[DataProvider('providePadData')]
+    public function shouldPad(string $string, int $length, string $padStr, int $padType, string $expected): void
+    {
+        $this->assertSame($expected, Str::pad($string, $length, $padStr, $padType));
+        $this->assertSame($expected, Str::pad($string, $length, $padStr, $padType, 'UTF-8'));
+    }
+
+    #[Test]
+    public function shouldPadWithSpacesToTheRightByDefault(): void
+    {
+        $this->assertSame('ab   ', Str::pad('ab', 5));
+    }
+
+    #[Test]
+    public function shouldExtractTheTextBetweenTwoDelimiters(): void
+    {
+        $this->assertSame(
+            ['string' => 'name', 'start' => 3, 'end' => 8, 'length' => 6],
+            Str::extract('a [ name ] b [ other ]', '[', ']')
+        );
+        $this->assertSame(
+            ['string' => 'other', 'start' => 14, 'end' => 20, 'length' => 7],
+            Str::extract('a [ name ] b [ other ]', '[', ']', 5)
+        );
+    }
+
+    #[Test]
+    public function shouldNotExtractWhenADelimiterIsNotThere(): void
+    {
+        $this->assertNull(Str::extract('a b', '[', ']'));
+        $this->assertNull(Str::extract('a [ b', '[', ']'));
+        $this->assertNull(Str::extract('a [ b ]', '[', ']', 4));
+    }
+
+    #[Test]
+    public function shouldSplitParametersKeepingTheEscapedDelimiters(): void
+    {
+        $this->assertSame(['a', 'b,c', 'd'], Str::splitParameters('a, b\\,c ,d'));
+        $this->assertSame(['a', 'b;c', 'd'], Str::splitParameters('a;b\\;c;d', ';'));
+        $this->assertSame(['only'], Str::splitParameters(' only '));
+    }
+
+    // -------------------------------------------------------------------------
+    // Regular expression errors
+    // -------------------------------------------------------------------------
+
+    /**
+     * @return array<string, array{string, list<mixed>}>
+     */
+    public static function providePatternFailuresData(): array
+    {
+        return [
+            'studly' => ['studly', [str_repeat('aB', 50)]],
+            'camel' => ['camel', [str_repeat('aB', 50)]],
+            'snake' => ['snake', [str_repeat('aB', 50)]],
+            'slug' => ['slug', [str_repeat('a-b', 50)]],
+            'format' => ['format', [str_repeat('{{ a }}', 50), ['a' => 1]]],
+        ];
+    }
+
+    /**
+     * @param list<mixed> $arguments
+     */
+    #[Test]
+    #[DataProvider('providePatternFailuresData')]
+    #[RunInSeparateProcess]
+    public function shouldReportTheRegularExpressionThatFails(string $method, array $arguments): void
+    {
+        // With the limit of backtracking at one, any text that is not tiny fails.
+        // The expression must not be compiled yet (a compiled one keeps the way
+        // it was compiled), so the test runs in its own process.
+        ini_set('pcre.jit', '0');
+        ini_set('pcre.backtrack_limit', '1');
+
+        $this->expectException(TranslatableRuntimeException::class);
+        $this->expectExceptionMessage('Regular expression error: Backtrack limit exhausted.');
+
+        Str::$method(...$arguments);
     }
 }

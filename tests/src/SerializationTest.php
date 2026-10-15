@@ -36,6 +36,9 @@ class SerializationTest extends TestCase
         $this->assertSame($expected, $result);
     }
 
+    /**
+     * @return array<array-key, array<int, mixed>>
+     */
     public static function provideSerializableData(): array
     {
         return [
@@ -96,6 +99,9 @@ class SerializationTest extends TestCase
         $this->assertSame($expected, $result);
     }
 
+    /**
+     * @return array<array-key, array<int, mixed>>
+     */
     public static function provideSerializedData(): array
     {
         $obj = new stdClass();
@@ -173,11 +179,13 @@ class SerializationTest extends TestCase
     public function shouldNotSerializeResources(): void
     {
         $open = fopen('php://memory', 'r');
+        $this->assertIsResource($open);
         $this->assertFalse(Serialization::isSerializable($open));
 
         // A resource that was closed is not one for PHP functions, and it is not
         // serializable either.
         $closed = fopen('php://memory', 'r');
+        $this->assertIsResource($closed);
         fclose($closed);
         $this->assertFalse(Serialization::isSerializable($closed));
 
@@ -191,6 +199,9 @@ class SerializationTest extends TestCase
         $this->assertFalse(Serialization::isSerializable($value));
     }
 
+    /**
+     * @return array<array-key, array<int, mixed>>
+     */
     public static function provideValuesThatPhpDoesNotSerialize(): array
     {
         return [
@@ -215,6 +226,7 @@ class SerializationTest extends TestCase
     public function shouldNotSerializeWhatHasSomethingThatIsNotSerializableInside(): void
     {
         $resource = fopen('php://memory', 'r');
+        $this->assertIsResource($resource);
 
         $this->assertFalse(Serialization::isSerializable(['a' => fn () => true]));
         $this->assertFalse(Serialization::isSerializable(['a' => ['b' => ['c' => $resource]]]));
@@ -230,11 +242,12 @@ class SerializationTest extends TestCase
 
         // The properties of any visibility.
         $withPrivate = new class () {
-            private mixed $stream;
+            /** @var resource */
+            private $stream;
 
             public function __construct()
             {
-                $this->stream = fopen('php://memory', 'r');
+                $this->stream = fopen('php://memory', 'r') ?: throw new RuntimeException('The stream can not be opened.');
             }
 
             public function close(): void
@@ -306,7 +319,7 @@ final class SelfSerializingFixture
         private readonly bool $failing = false,
         private readonly bool $withClosure = false
     ) {
-        $this->stream = fopen('php://memory', 'r');
+        $this->stream = fopen('php://memory', 'r') ?: throw new RuntimeException('The stream can not be opened.');
     }
 
     public function __destruct()
@@ -323,6 +336,9 @@ final class SelfSerializingFixture
         return ['name' => $this->withClosure ? fn () => true : 'value'];
     }
 
+    /**
+     * @param array<array-key, mixed> $data
+     */
     public function __unserialize(array $data): void
     {
     }

@@ -31,9 +31,7 @@ class ArrEnsureArrayAtPathTest extends TestCase
 
         Arr::ensureArrayAtPath($data, 'Encabezado.Detalle');
 
-        $this->assertIsArray($data['Encabezado']['Detalle']);
-        $this->assertArrayHasKey(0, $data['Encabezado']['Detalle']);
-        $this->assertSame(['Codigo' => '123'], $data['Encabezado']['Detalle'][0]);
+        $this->assertSame(['Encabezado' => ['Detalle' => [['Codigo' => '123']]]], $data);
     }
 
     public function testAlreadyArray(): void
@@ -48,9 +46,7 @@ class ArrEnsureArrayAtPathTest extends TestCase
 
         Arr::ensureArrayAtPath($data, 'Encabezado.Detalle');
 
-        $this->assertIsArray($data['Encabezado']['Detalle']);
-        $this->assertArrayHasKey(0, $data['Encabezado']['Detalle']);
-        $this->assertSame(['Codigo' => '123'], $data['Encabezado']['Detalle'][0]);
+        $this->assertSame(['Encabezado' => ['Detalle' => [['Codigo' => '123']]]], $data);
     }
 
     public function testNestedPath(): void
@@ -67,9 +63,7 @@ class ArrEnsureArrayAtPathTest extends TestCase
 
         Arr::ensureArrayAtPath($data, 'Root.Encabezado.Detalle');
 
-        $this->assertIsArray($data['Root']['Encabezado']['Detalle']);
-        $this->assertArrayHasKey(0, $data['Root']['Encabezado']['Detalle']);
-        $this->assertSame(['Codigo' => '456'], $data['Root']['Encabezado']['Detalle'][0]);
+        $this->assertSame(['Root' => ['Encabezado' => ['Detalle' => [['Codigo' => '456']]]]], $data);
     }
 
     public function testEmptyPath(): void
@@ -78,7 +72,7 @@ class ArrEnsureArrayAtPathTest extends TestCase
 
         Arr::ensureArrayAtPath($data, 'Root.Encabezado.Detalle');
 
-        $this->assertNull($data['Root']['Encabezado']['Detalle'] ?? null);
+        $this->assertSame([], $data);
     }
 
     public function testEmptyArrayValue(): void
@@ -91,7 +85,6 @@ class ArrEnsureArrayAtPathTest extends TestCase
 
         Arr::ensureArrayAtPath($data, 'Encabezado.Detalle');
 
-        $this->assertIsArray($data['Encabezado']['Detalle']);
-        $this->assertArrayNotHasKey(0, $data['Encabezado']['Detalle']);
+        $this->assertSame(['Encabezado' => ['Detalle' => []]], $data);
     }
 }

@@ -47,7 +47,7 @@ final class JsonSerializer
      *
      * @param mixed $value The value to serialize to JSON.
      * @param int|null $flags JSON encoding flags (uses DEFAULT_FLAGS if null).
-     * @param int $depth Maximum recursion depth.
+     * @param int<1, max> $depth Maximum recursion depth.
      * @return string JSON encoded string.
      * @throws JsonException When encoding fails.
      */
@@ -69,7 +69,7 @@ final class JsonSerializer
         self::transformObjects($value);
 
         // Encode to JSON.
-        return json_encode($value, $flags, $depth);
+        return json_encode($value, $flags | JSON_THROW_ON_ERROR, $depth);
     }
 
     /**

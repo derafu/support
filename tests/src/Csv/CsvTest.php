@@ -17,6 +17,7 @@ use Derafu\Support\File;
 use LogicException;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\RunInSeparateProcess;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
@@ -54,6 +55,9 @@ class CsvTest extends TestCase
         $this->assertSame('London', $result[2][2]);
     }
 
+    /**
+     * @param array<array-key, mixed> $expected
+     */
     #[Test]
     #[DataProvider('provideCsvData')]
     public function shouldReadCsvFile(
@@ -66,6 +70,9 @@ class CsvTest extends TestCase
         $this->assertSame($expected, $result);
     }
 
+    /**
+     * @return array<array-key, array<int, mixed>>
+     */
     public static function provideCsvData(): array
     {
         return [
@@ -304,7 +311,7 @@ class CsvTest extends TestCase
 
         Csv::send($data, 'test.csv', sendHeaders: false);
 
-        $output = ob_get_clean();
+        $output = (string) ob_get_clean();
 
         // Verify content.
         $result = Csv::load($output);
@@ -375,5 +382,87 @@ echo json_encode(["valid" => $valid, "deprecations" => $deprecations]);
         $output = (string) shell_exec(escapeshellarg(PHP_BINARY) . ' ' . escapeshellarg($script) . ' 2>&1');
 
         $this->assertSame('{"valid":true,"deprecations":[]}', $output);
+    }
+
+    #[Test]
+    public function shouldLoadContentInAnotherEncoding(): void
+    {
+        $latin1 = mb_convert_encoding("name;city\nMuñoz;Ñuñoa", 'ISO-8859-1', 'UTF-8');
+
+        $this->assertSame(
+            [['name', 'city'], ['Muñoz', 'Ñuñoa']],
+            Csv::load($latin1, encoding: 'ISO-8859-1')
+        );
+    }
+
+    #[Test]
+    public function shouldGenerateContentInAnotherEncoding(): void
+    {
+        $content = Csv::generate([['Muñoz', 'Ñuñoa']], encoding: 'ISO-8859-1');
+
+        $this->assertSame(mb_convert_encoding("Muñoz;Ñuñoa\n", 'ISO-8859-1', 'UTF-8'), $content);
+    }
+
+    #[Test]
+    public function shouldFailToWriteWhenTheFileCanNotBeWritten(): void
+    {
+        // The target is a directory: it is in a directory that can be used, but
+        // it can not be opened as a file (and PHP warns about it).
+        set_error_handler(static fn (): bool => true);
+
+        try {
+            $this->expectException(LogicException::class);
+            $this->expectExceptionMessage('Failed to write CSV file: ' . $this->tempDir);
+
+            Csv::write([['a']], $this->tempDir);
+        } finally {
+            restore_error_handler();
+        }
+    }
+
+    #[Test]
+    public function shouldNotValidateAFileWhenTheEscapeIsNotValid(): void
+    {
+        $file = $this->tempDir . '/valid.csv';
+        file_put_contents($file, "a;b\n1;2\n");
+
+        $this->assertTrue(Csv::validate($file));
+        $this->assertFalse(Csv::validate($file, escape: 'ab'));
+    }
+
+    #[Test]
+    #[RunInSeparateProcess]
+    public function shouldSendTheHeadersOfTheDownload(): void
+    {
+        if (!function_exists('xdebug_get_headers')) {
+            $this->markTestSkipped('xdebug is needed to read the headers that were sent.');
+        }
+
+        ob_start();
+        Csv::send([['a', 'b']], 'data.csv');
+        $output = ob_get_clean();
+
+        $headers = xdebug_get_headers();
+        $this->assertSame("a;b\n", $output);
+        $this->assertContains('Content-Type: text/csv; charset=UTF-8', $headers);
+        $this->assertContains('Content-Disposition: attachment; filename="data.csv"', $headers);
+        $this->assertContains('Content-Length: 4', $headers);
+    }
+
+    #[Test]
+    public function shouldNotSendTheDownloadWhenTheHeadersWereSent(): void
+    {
+        // The headers are sent by the first output of the process, which is
+        // not possible to cause inside PHPUnit, so it is a process of its own.
+        $script = $this->tempDir . '/send.php';
+        file_put_contents($script, sprintf(
+            '<?php require %s; echo "x\n"; try { %s::send([["a"]], "data.csv"); } catch (Throwable $e) { echo $e->getMessage(); }',
+            var_export(dirname(__DIR__, 3) . '/vendor/autoload.php', true),
+            Csv::class
+        ));
+
+        $output = (string) shell_exec(escapeshellarg(PHP_BINARY) . ' ' . escapeshellarg($script) . ' 2>&1');
+
+        $this->assertSame("x\nHeaders have already been sent.", $output);
     }
 }

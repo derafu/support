@@ -81,7 +81,8 @@ final class Caster
     /**
      * Turns a value that is not a scalar into a string, without warnings: an
      * array as its JSON, an object as its text (or the name of its class if it
-     * has none) and anything else (a resource) as PHP writes it.
+     * has none), an open resource as `Resource id #n` and anything else (a
+     * resource that was closed) as its type (`resource (closed)`).
      *
      * @param mixed $value The value to turn into a string.
      * @return string The string.
@@ -99,7 +100,11 @@ final class Caster
             return $value instanceof Stringable ? (string) $value : get_debug_type($value);
         }
 
-        return (string) $value;
+        if (is_resource($value)) {
+            return 'Resource id #' . get_resource_id($value);
+        }
+
+        return get_debug_type($value);
     }
 
     /**

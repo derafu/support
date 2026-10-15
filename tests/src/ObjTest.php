@@ -88,6 +88,9 @@ class ObjTest extends TestCase
         $this->assertSame($expected, $result);
     }
 
+    /**
+     * @return array<array-key, array<int, mixed>>
+     */
     public static function providePropertyTestData(): array
     {
         $testObject = new TestVisibilityPropertiesClass();
@@ -153,11 +156,11 @@ class ObjTest extends TestCase
 
         $result = Obj::fill($object, $data);
 
-        $this->assertIsInt($result->intValue);
-        $this->assertIsFloat($result->floatValue);
-        $this->assertIsString($result->stringValue);
-        $this->assertIsBool($result->boolValue);
-        $this->assertIsArray($result->arrayValue);
+        $this->assertSame(42, $result->intValue);
+        $this->assertSame(3.14, $result->floatValue);
+        $this->assertSame('test', $result->stringValue);
+        $this->assertTrue($result->boolValue);
+        $this->assertSame([1, 2, 3], $result->arrayValue);
     }
 
     #[Test]
@@ -209,10 +212,17 @@ class TestPublicPropertiesClass
 
     public int $publicInt;
 
+    /**
+         * @var array<array-key, mixed>
+         */
     public array $publicArray;
 
-    /** @phpstan-ignore-next-line */
     private string $privateProperty = 'private';
+
+    public function privateProperty(): string
+    {
+        return $this->privateProperty;
+    }
 }
 
 // Test classes for visibility checks.
@@ -222,8 +232,18 @@ class TestVisibilityClass
 
     protected int $protectedInt = 42;
 
-    /** @phpstan-ignore-next-line */
+    /**
+     * @var array<array-key, mixed>
+     */
     private array $privateArray = [];
+
+    /**
+     * @return array<array-key, mixed>
+     */
+    public function privateArray(): array
+    {
+        return $this->privateArray;
+    }
 }
 
 // Test class for property access.
@@ -243,6 +263,9 @@ class TestPropertyTypesClass
 
     public bool $boolValue;
 
+    /**
+         * @var array<array-key, mixed>
+         */
     public array $arrayValue;
 }
 
@@ -267,8 +290,12 @@ class TestVisibilityPropertiesClass
 
     protected string $protectedProp = 'protected';
 
-    /** @phpstan-ignore-next-line */
     private string $privateProp = 'private';
+
+    public function privateProp(): string
+    {
+        return $this->privateProp;
+    }
 }
 
 // Test class for public values.
@@ -280,8 +307,18 @@ class TestPublicValuesClass
 
     protected bool $third = true;
 
-    /** @phpstan-ignore-next-line */
+    /**
+     * @var array<array-key, mixed>
+     */
     private array $fourth = [];
+
+    /**
+     * @return array<array-key, mixed>
+     */
+    public function fourth(): array
+    {
+        return $this->fourth;
+    }
 }
 
 // Test classes for inheritance.

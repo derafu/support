@@ -11,19 +11,31 @@ declare(strict_types=1);
  */
 
 return [
+    // ArrayReader and ArrayType.
+    'The key "{key}" is required.' =>
+        'La clave "{key}" es obligatoria.',
+    'The key "{key}" must be of type {expected}, {given} given.' =>
+        'La clave "{key}" debe ser de tipo {expected}, se entregó {given}.',
+
     // Arr.
+    'Failed to generate the XML.' =>
+        'No se pudo generar el XML.',
     'Row {index} must have exactly 2 columns.' =>
         'La fila {index} debe tener exactamente 2 columnas.',
+    'The value of "{key}" can not be written as XML text, {given} given.' =>
+        'El valor de "{key}" no se puede escribir como texto XML, se entregó {given}.',
+    'The first column of row {index} must be a scalar or null to be a key.' =>
+        'La primera columna de la fila {index} debe ser un escalar o null para ser una clave.',
 
     // Csv.
+    'Failed to convert the CSV content from {encoding} to UTF-8.' =>
+        'No se pudo convertir el contenido CSV de {encoding} a UTF-8.',
     'Failed to parse CSV content: {error}' =>
         'No se pudo interpretar el contenido CSV: {error}',
     'Cannot read file: {file}' =>
         'No se puede leer el archivo: {file}',
     'Failed to read file: {file}' =>
         'No se pudo leer el archivo: {file}',
-    'Failed to read CSV file {file}: {error}' =>
-        'No se pudo leer el archivo CSV {file}: {error}',
     'Cannot use directory: {directory}' =>
         'No se puede usar el directorio: {directory}',
     'Failed to write CSV file: {file}' =>
@@ -34,6 +46,8 @@ return [
         'Los encabezados ya fueron enviados.',
 
     // Date.
+    'Invalid date: {year}-{month}-{day}.' =>
+        'Fecha inválida: {year}-{month}-{day}.',
     'Invalid month in period: {period}' =>
         'Mes inválido en el período: {period}',
     'Invalid date string: {date}. {error}' =>
@@ -48,6 +62,10 @@ return [
         'No se puede asignar el atributo "{attribute}" a la clase {class}. No se encontró una propiedad ni un método setter adecuado.',
     'Failed to create instance of {class}: {error}' =>
         'No se pudo crear una instancia de {class}: {error}',
+
+    // Encoding.
+    'Cannot convert the property "{property}" of {class}: it is readonly.' =>
+        'No se puede convertir la propiedad "{property}" de {class}: es de solo lectura.',
 
     // File.
     'Unable to create directory ({directory}).' =>
@@ -92,6 +110,10 @@ return [
         'El valor "{ip}" no es una dirección IP.',
 
     // Str.
+    'Regular expression error: {error}.' =>
+        'Error de expresión regular: {error}.',
+    'The value of "{key}" can not be written as text, {given} given.' =>
+        'El valor de "{key}" no se puede escribir como texto, se entregó {given}.',
     'Unsupported placeholder style: {style}.' =>
         'Estilo de marcador no soportado: {style}.',
     'Length must be at least 1.' =>

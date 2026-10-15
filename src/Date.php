@@ -230,16 +230,16 @@ final class Date
     {
         // The days before the day that does not exist: 1 is January 1, 1900.
         if ($n < 60) {
-            return Carbon::create(1899, 12, 31)->addDays($n);
+            return self::createDate(1899, 12, 31)->addDays($n);
         }
 
         // The day that does not exist, February 29, 1900, is February 28.
         if ($n === 60) {
-            return Carbon::create(1900, 2, 28);
+            return self::createDate(1900, 2, 28);
         }
 
         // From March 1, 1900 the number includes the day that does not exist.
-        return Carbon::create(1899, 12, 30)->addDays($n);
+        return self::createDate(1899, 12, 30)->addDays($n);
     }
 
     /**
@@ -269,9 +269,9 @@ final class Date
     ): ?string {
         try {
             $carbonDate = Carbon::createFromFormat('Y-m-d', $date);
-            $lastErrors = $carbonDate->getLastErrors();
+            $lastErrors = Carbon::getLastErrors();
 
-            if (!$carbonDate instanceof Carbon ||
+            if ($carbonDate === null ||
                 $carbonDate->format('Y-m-d') !== $date ||
                 ($lastErrors !== false && $lastErrors['error_count'] > 0)) {
                 return null;
@@ -316,7 +316,7 @@ final class Date
      *
      * @param Carbon|string $from Start date.
      * @param Carbon|string $to End date.
-     * @param array $days Array of dates to count in Y-m-d format.
+     * @param list<string> $days Array of dates to count in Y-m-d format.
      * @param bool $excludeWeekend Whether to skip weekends.
      * @return int Number of matching days found.
      */
@@ -404,7 +404,7 @@ final class Date
      *
      * @param int $totalYears Number of years to generate.
      * @param int|null $from Starting year (null for current year).
-     * @return array Array of years in descending order.
+     * @return list<int> Array of years in descending order.
      */
     public static function generateYears(int $totalYears, ?int $from = null): array
     {
@@ -686,8 +686,11 @@ final class Date
      * @param int $year Year to look in.
      * @param int $month Month to look in.
      * @param int $workingDay Working day number to find.
-     * @param array $holidays Array of holiday dates to exclude.
-     * @return Carbon|false The date found or false if invalid.
+     * @param list<string> $holidays Array of holiday dates to exclude.
+     * @return Carbon|false The date found, or false if the month does not have
+     * that many working days.
+     * @throws InvalidArgumentException If the month does not exist (it is not
+     * from 1 to 12): it is not taken as a month of another year.
      */
     public static function getWorkingDay(
         int $year,
@@ -696,7 +699,7 @@ final class Date
         array $holidays = []
     ): Carbon|false {
         // Start with first day of month.
-        $date = Carbon::create($year, $month, 1);
+        $date = self::createDate($year, $month, 1);
 
         // Get first working day.
         $firstWorkingDay = self::addWorkingDays($date, 0, $holidays);
@@ -720,7 +723,7 @@ final class Date
      * Gets the working day number of the month for a specific date.
      *
      * @param Carbon|string $date The date to check.
-     * @param array $holidays Array of holiday dates in Y-m-d format.
+     * @param list<string> $holidays Array of holiday dates in Y-m-d format.
      * @return int|false Working day number or false if not a working day.
      */
     public static function getWorkingDayNumber(
@@ -753,7 +756,7 @@ final class Date
      * Checks if a date is the last working day of its month.
      *
      * @param Carbon|string $date Date to check.
-     * @param array $holidays Array of holiday dates to exclude.
+     * @param list<string> $holidays Array of holiday dates to exclude.
      * @return bool True if it's the last working day.
      */
     public static function isLastWorkingDay(
@@ -780,7 +783,7 @@ final class Date
      *
      * @param Carbon|string $date Starting date.
      * @param int $days Number of working days to add.
-     * @param array $holidays Array of holiday dates in Y-m-d format.
+     * @param list<string> $holidays Array of holiday dates in Y-m-d format.
      * @return Carbon Resulting date.
      */
     public static function addWorkingDays(
@@ -809,7 +812,7 @@ final class Date
      *
      * @param Carbon|string $date Starting date.
      * @param int $days Number of working days to subtract.
-     * @param array $holidays Array of holiday dates in Y-m-d format.
+     * @param list<string> $holidays Array of holiday dates in Y-m-d format.
      * @return Carbon Resulting date.
      */
     public static function subtractWorkingDays(
@@ -831,5 +834,29 @@ final class Date
         }
 
         return $workingDate;
+    }
+
+    /**
+     * Creates the date of a year, a month and a day, at the start of the day.
+     *
+     * @param int $year Year.
+     * @param int $month Month.
+     * @param int $day Day.
+     * @return Carbon The date.
+     * @throws InvalidArgumentException If the date does not exist (a month that
+     * is not from 1 to 12, a day that the month does not have).
+     */
+    private static function createDate(int $year, int $month, int $day): Carbon
+    {
+        if (!checkdate($month, $day, $year)) {
+            throw new InvalidArgumentException([
+                'Invalid date: {year}-{month}-{day}.',
+                'year' => $year,
+                'month' => $month,
+                'day' => $day,
+            ]);
+        }
+
+        return Carbon::now()->setDate($year, $month, $day)->startOfDay();
     }
 }

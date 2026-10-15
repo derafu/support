@@ -142,7 +142,7 @@ class FactoryTest extends TestCase
         $result = Factory::create($data);
 
         $this->assertSame('Parent', $result->name);
-        $this->assertIsObject($result->child);
+        $this->assertInstanceOf(stdClass::class, $result->child);
         $this->assertSame('Child', $result->child->name);
     }
 
@@ -206,6 +206,9 @@ class FactoryTest extends TestCase
 
 class FactoryHelperFallbackClass
 {
+    /**
+         * @var array<string, mixed>
+         */
     private array $attributes = [];
 
     public function setAttribute(string $name, mixed $value): void

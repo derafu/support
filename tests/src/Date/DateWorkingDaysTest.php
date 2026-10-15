@@ -14,6 +14,7 @@ namespace Derafu\TestsSupport\Date;
 
 use Carbon\Carbon;
 use Derafu\Support\Date;
+use Derafu\Translation\Exception\Logic\TranslatableInvalidArgumentException;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
@@ -34,6 +35,9 @@ class DateWorkingDaysTest extends TestCase
         parent::tearDown();
     }
 
+    /**
+     * @param list<string> $holidays
+     */
     #[Test]
     #[DataProvider('provideWorkingDayData')]
     public function shouldFindWorkingDay(
@@ -53,6 +57,9 @@ class DateWorkingDaysTest extends TestCase
         }
     }
 
+    /**
+     * @return array<array-key, array<int, mixed>>
+     */
     public static function provideWorkingDayData(): array
     {
         return [
@@ -87,6 +94,9 @@ class DateWorkingDaysTest extends TestCase
         ];
     }
 
+    /**
+     * @param list<string> $holidays
+     */
     #[Test]
     #[DataProvider('provideWorkingDaysData')]
     public function shouldAddWorkingDays(
@@ -99,6 +109,9 @@ class DateWorkingDaysTest extends TestCase
         $this->assertSame($expected, $result->format('Y-m-d'));
     }
 
+    /**
+     * @return array<array-key, array<int, mixed>>
+     */
     public static function provideWorkingDaysData(): array
     {
         return [
@@ -141,6 +154,9 @@ class DateWorkingDaysTest extends TestCase
         ];
     }
 
+    /**
+     * @param list<string> $holidays
+     */
     #[Test]
     #[DataProvider('provideLastWorkingDayData')]
     public function shouldCheckLastWorkingDay(
@@ -152,6 +168,9 @@ class DateWorkingDaysTest extends TestCase
         $this->assertSame($expected, $result);
     }
 
+    /**
+     * @return array<array-key, array<int, mixed>>
+     */
     public static function provideLastWorkingDayData(): array
     {
         return [
@@ -181,5 +200,43 @@ class DateWorkingDaysTest extends TestCase
                 false,
             ],
         ];
+    }
+
+    #[Test]
+    public function shouldSubtractWorkingDaysSkippingWeekendsAndHolidays(): void
+    {
+        // Monday 2024-01-15: the previous working day is Friday 2024-01-12.
+        $this->assertSame('2024-01-12', Date::subtractWorkingDays('2024-01-15', 1)->format('Y-m-d'));
+        $this->assertSame('2024-01-11', Date::subtractWorkingDays('2024-01-15', 2)->format('Y-m-d'));
+        $this->assertSame('2024-01-11', Date::subtractWorkingDays('2024-01-15', 2, ['2024-01-10'])->format('Y-m-d'));
+        $this->assertSame('2024-01-09', Date::subtractWorkingDays('2024-01-15', 3, ['2024-01-12'])->format('Y-m-d'));
+        $this->assertSame('2024-01-15', Date::subtractWorkingDays('2024-01-15', 0)->format('Y-m-d'));
+    }
+
+    #[Test]
+    public function shouldNotChangeTheDateWhenSubtractingWorkingDays(): void
+    {
+        $date = Carbon::parse('2024-01-15');
+
+        Date::subtractWorkingDays($date, 3);
+
+        $this->assertSame('2024-01-15', $date->format('Y-m-d'));
+    }
+
+    #[Test]
+    public function shouldRejectAMonthThatDoesNotExistWhenFindingAWorkingDay(): void
+    {
+        $this->expectException(TranslatableInvalidArgumentException::class);
+        $this->expectExceptionMessage('Invalid date: 2024-13-1.');
+
+        Date::getWorkingDay(2024, 13, 1);
+    }
+
+    #[Test]
+    public function shouldFindTheWorkingDayOfAMonth(): void
+    {
+        $this->assertInstanceOf(Carbon::class, Date::getWorkingDay(2024, 3, 5));
+        $this->assertSame('2024-03-07', Date::getWorkingDay(2024, 3, 5)->format('Y-m-d'));
+        $this->assertFalse(Date::getWorkingDay(2024, 3, 40));
     }
 }

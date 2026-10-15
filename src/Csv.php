@@ -17,6 +17,7 @@ use Derafu\Translation\Exception\Core\TranslatableRuntimeException as RuntimeExc
 use League\Csv\Exception as CsvException;
 use League\Csv\Reader;
 use League\Csv\Writer;
+use Stringable;
 
 /**
  * CSV file manipulation utilities.
@@ -35,7 +36,7 @@ final class Csv
      * @param string $enclosure Field enclosure character (default: ").
      * @param string $escape Escape character (default: \).
      * @param string $encoding Input encoding (default: UTF-8).
-     * @return array Array of CSV records.
+     * @return array<int, array<array-key, mixed>> Array of CSV records.
      * @throws RuntimeException If CSV parsing fails.
      */
     public static function load(
@@ -48,7 +49,8 @@ final class Csv
         try {
             // Convert encoding if needed.
             if ($encoding !== 'UTF-8') {
-                $content = mb_convert_encoding($content, 'UTF-8', $encoding);
+                $converted = mb_convert_encoding($content, 'UTF-8', $encoding);
+                $content = $converted === false ? throw new RuntimeException(['Failed to convert the CSV content from {encoding} to UTF-8.', 'encoding' => $encoding]) : $converted;
             }
 
             $csv = Reader::fromString($content);
@@ -74,7 +76,7 @@ final class Csv
      * @param string $enclosure Field enclosure character (default: ").
      * @param string $escape Escape character (default: \).
      * @param string $encoding Input encoding (default: UTF-8).
-     * @return array Array of CSV records.
+     * @return array<int, array<array-key, mixed>> Array of CSV records.
      * @throws RuntimeException If file cannot be read or CSV parsing fails.
      */
     public static function read(
@@ -88,30 +90,16 @@ final class Csv
             throw new RuntimeException(['Cannot read file: {file}', 'file' => $file]);
         }
 
-        try {
-            $content = file_get_contents($file);
-            if ($content === false) {
-                throw new RuntimeException(['Failed to read file: {file}', 'file' => $file]);
-            }
+        $content = file_get_contents($file);
+        $content = $content === false ? throw new RuntimeException(['Failed to read file: {file}', 'file' => $file]) : $content;
 
-            return self::load($content, $separator, $enclosure, $escape, $encoding);
-        } catch (CsvException $e) {
-            throw new RuntimeException(
-                [
-                    'Failed to read CSV file {file}: {error}',
-                    'file' => $file,
-                    'error' => $e->getMessage(),
-                ],
-                0,
-                $e
-            );
-        }
+        return self::load($content, $separator, $enclosure, $escape, $encoding);
     }
 
     /**
      * Writes data to a CSV file.
      *
-     * @param array $data Array of records to write.
+     * @param array<array-key, array<array-key, float|int|string|Stringable|null>> $data Array of records to write.
      * @param string $file Path where the CSV file should be written.
      * @param string $separator Column delimiter (default: ;).
      * @param string $enclosure Field enclosure character (default: ").
@@ -141,7 +129,7 @@ final class Csv
     /**
      * Generates CSV content from an array.
      *
-     * @param array $data Array of records to convert to CSV.
+     * @param array<array-key, array<array-key, float|int|string|Stringable|null>> $data Array of records to convert to CSV.
      * @param string $separator Column delimiter (default: ;).
      * @param string $enclosure Field enclosure character (default: ").
      * @param string $escape Escape character (default: \).
@@ -163,7 +151,7 @@ final class Csv
             $csv->setEscape($escape);
 
             // If first element has keys, use them as header.
-            if (!empty($data) && is_array(reset($data))) {
+            if ($data !== []) {
                 $firstRow = reset($data);
                 if (!array_is_list($firstRow)) {
                     $csv->insertOne(array_keys($firstRow));
@@ -192,7 +180,7 @@ final class Csv
     /**
      * Sends CSV content as a download response.
      *
-     * @param array $data Array of records to send.
+     * @param array<array-key, array<array-key, float|int|string|Stringable|null>> $data Array of records to send.
      * @param string $filename Suggested filename for the download.
      * @param string $separator Column delimiter (default: ;).
      * @param string $enclosure Field enclosure character (default: ").

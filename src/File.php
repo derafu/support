@@ -16,6 +16,7 @@ use Derafu\Translation\Exception\Core\TranslatableRuntimeException as RuntimeExc
 use Exception;
 use RecursiveDirectoryIterator;
 use RecursiveIteratorIterator;
+use SplFileInfo;
 use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\Mime\MimeTypes;
 use Throwable;
@@ -80,31 +81,15 @@ final class File
         }
 
         // Create temporary file in the same directory.
-        $tempFile = tempnam($directory, basename($targetFile));
-        if (false === $tempFile) {
-            throw new RuntimeException([
-                'Unable to create temporary file in directory ({directory}).',
-                'directory' => $directory,
-            ]);
-        }
+        $tempFile = tempnam($directory, basename($targetFile)) ?: throw new RuntimeException(['Unable to create temporary file in directory ({directory}).', 'directory' => $directory]);
 
         try {
             // Write content to temporary file.
-            if (false === file_put_contents($tempFile, $content)) {
-                throw new RuntimeException([
-                    'Unable to write content to temporary file ({file}).',
-                    'file' => $tempFile,
-                ]);
-            }
+            false !== file_put_contents($tempFile, $content) ?: throw new RuntimeException(['Unable to write content to temporary file ({file}).', 'file' => $tempFile]);
 
             // Set file permissions if specified.
             if ($permissions !== null) {
-                if (!@chmod($tempFile, $permissions)) {
-                    throw new RuntimeException([
-                        'Unable to set permissions on temporary file ({file}).',
-                        'file' => $tempFile,
-                    ]);
-                }
+                @chmod($tempFile, $permissions) ?: throw new RuntimeException(['Unable to set permissions on temporary file ({file}).', 'file' => $tempFile]);
             } else {
                 @chmod($tempFile, 0666 & ~umask());
             }
@@ -237,6 +222,7 @@ final class File
                 );
 
                 foreach ($files as $file) {
+                    /** @var SplFileInfo $file */
                     if ($file->isDir()) {
                         continue;
                     }
@@ -276,9 +262,7 @@ final class File
         string $destination,
         bool $overwrite = false
     ): void {
-        if (!extension_loaded('zip')) {
-            throw new RuntimeException('ZIP extension is not available');
-        }
+        extension_loaded('zip') ?: throw new RuntimeException('ZIP extension is not available');
 
         if (!file_exists($zipFile)) {
             throw new RuntimeException(['ZIP file does not exist: {file}', 'file' => $zipFile]);
@@ -361,9 +345,7 @@ final class File
             header('Expires: 0');
         }
 
-        if (readfile($file) === false) {
-            throw new RuntimeException(['Failed to send file: {file}', 'file' => $file]);
-        }
+        readfile($file) !== false ?: throw new RuntimeException(['Failed to send file: {file}', 'file' => $file]);
 
         if ($delete) {
             unlink($file);

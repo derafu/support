@@ -41,9 +41,10 @@ final class Hydrator
      * Because of the last one, the attributes must not come from a user as they
      * are: they are the names of the properties.
      *
-     * @param object $instance Object instance to hydrate.
-     * @param array $data Data to populate the object with.
-     * @return object The hydrated object instance.
+     * @template T of object
+     * @param T $instance Object instance to hydrate.
+     * @param array<string, mixed> $data Data to populate the object with.
+     * @return T The hydrated object instance.
      * @throws LogicException If an attribute cannot be assigned (there is no
      * setter and no property for it).
      */
@@ -68,7 +69,7 @@ final class Hydrator
      * Attempts to assign a value to an object property through various methods.
      *
      * @param object $instance Object instance.
-     * @param ReflectionClass $reflection Reflection of the object's class.
+     * @param ReflectionClass<object> $reflection Reflection of the object's class.
      * @param string $attribute Attribute name.
      * @param mixed $value Value to assign.
      * @return bool True if the value was assigned, false otherwise.
@@ -112,7 +113,7 @@ final class Hydrator
      *
      * @template T of object
      * @param class-string<T> $class The class to instantiate.
-     * @param array $data Data to populate the object with.
+     * @param array<string, mixed> $data Data to populate the object with.
      * @return T The instantiated and hydrated object.
      * @throws LogicException If the class cannot be instantiated.
      */

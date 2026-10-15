@@ -14,6 +14,7 @@ namespace Derafu\TestsSupport\File;
 
 use Derafu\Support\File;
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\RunInSeparateProcess;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use RuntimeException;
@@ -193,5 +194,61 @@ class FileCompressTest extends TestCase
         }
 
         return $entries;
+    }
+
+    #[Test]
+    public function shouldFailToZipWhenTheDestinationCanNotBeOpened(): void
+    {
+        // PHP warns that the file can not be opened.
+        set_error_handler(static fn (): bool => true);
+
+        try {
+            $this->expectException(RuntimeException::class);
+            $this->expectExceptionMessage(
+                'Cannot open destination file for writing: ' . $this->tempDir . '/missing/file.zip'
+            );
+
+            File::zip($this->fixturesDir . '/zip/single/file.txt', $this->tempDir . '/missing/file.zip');
+        } finally {
+            restore_error_handler();
+        }
+    }
+
+    #[Test]
+    public function shouldFailToUnzipWhenTheFilesCanNotBeExtracted(): void
+    {
+        $zip = $this->tempDir . '/single.zip';
+        File::zip($this->fixturesDir . '/zip/single/file.txt', $zip);
+        $destination = $this->tempDir . '/read-only';
+        mkdir($destination);
+        chmod($destination, 0555);
+
+        // PHP warns that the files can not be written.
+        set_error_handler(static fn (): bool => true);
+
+        try {
+            $this->expectException(RuntimeException::class);
+            $this->expectExceptionMessage('Failed to extract ZIP file to: ' . $destination);
+
+            File::unzip($zip, $destination);
+        } finally {
+            restore_error_handler();
+            chmod($destination, 0755);
+        }
+    }
+
+    #[Test]
+    #[RunInSeparateProcess]
+    public function shouldCompressAndSendTheArchiveAsADownload(): void
+    {
+        $source = $this->tempDir . '/to-send.txt';
+        file_put_contents($source, 'content');
+
+        ob_start();
+        File::compress($source, download: true);
+        $output = (string) ob_get_clean();
+
+        $this->assertStringStartsWith('PK', $output);
+        $this->assertStringContainsString('to-send.txt', $output);
     }
 }

@@ -21,6 +21,10 @@ use PHPUnit\Framework\TestCase;
 #[CoversClass(Arr::class)]
 class ArrDotNestedTest extends TestCase
 {
+    /**
+     * @param array<array-key, mixed> $expected
+     * @param array<array-key, mixed> $input
+     */
     #[Test]
     #[DataProvider('provideDotData')]
     public function shouldFlattenArrayWithDotNotation(
@@ -32,6 +36,9 @@ class ArrDotNestedTest extends TestCase
         $this->assertSame($expected, $result);
     }
 
+    /**
+     * @return array<array-key, array<int, mixed>>
+     */
     public static function provideDotData(): array
     {
         return [
@@ -58,6 +65,10 @@ class ArrDotNestedTest extends TestCase
         ];
     }
 
+    /**
+     * @param array<array-key, mixed> $expected
+     * @param array<array-key, mixed> $input
+     */
     #[Test]
     #[DataProvider('provideNestedData')]
     public function shouldConvertDotNotationToNestedArray(
@@ -68,6 +79,9 @@ class ArrDotNestedTest extends TestCase
         $this->assertSame($expected, $result);
     }
 
+    /**
+     * @return array<array-key, array<int, mixed>>
+     */
     public static function provideNestedData(): array
     {
         return [
@@ -86,6 +100,9 @@ class ArrDotNestedTest extends TestCase
         ];
     }
 
+    /**
+     * @param array<array-key, mixed> $original
+     */
     #[Test]
     #[DataProvider('provideCycleData')]
     public function shouldCompleteCycleDotToNestedAndBack(
@@ -96,6 +113,9 @@ class ArrDotNestedTest extends TestCase
         $this->assertSame($original, $nested);
     }
 
+    /**
+     * @return array<array-key, array<int, mixed>>
+     */
     public static function provideCycleData(): array
     {
         return [

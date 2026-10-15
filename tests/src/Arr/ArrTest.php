@@ -21,6 +21,10 @@ use PHPUnit\Framework\TestCase;
 #[CoversClass(Arr::class)]
 class ArrTest extends TestCase
 {
+    /**
+     * @param array<array-key, mixed> $expected
+     * @param array<array-key, mixed> $input
+     */
     #[Test]
     #[DataProvider('provideAutoCastData')]
     public function shouldAutoCastArrayValues(
@@ -32,6 +36,9 @@ class ArrTest extends TestCase
         $this->assertSame($expected, $result);
     }
 
+    /**
+     * @return array<array-key, array<int, mixed>>
+     */
     public static function provideAutoCastData(): array
     {
         return [
@@ -58,6 +65,10 @@ class ArrTest extends TestCase
         ];
     }
 
+    /**
+     * @param array<array-key, mixed> $expected
+     * @param array<array-key, mixed> $table
+     */
     #[Test]
     #[DataProvider('provideTableToAssociativeData')]
     public function shouldConvertTableToAssociativeArray(
@@ -68,6 +79,9 @@ class ArrTest extends TestCase
         $this->assertSame($expected, $result);
     }
 
+    /**
+     * @return array<array-key, array<int, mixed>>
+     */
     public static function provideTableToAssociativeData(): array
     {
         return [
@@ -82,6 +96,11 @@ class ArrTest extends TestCase
         ];
     }
 
+    /**
+     * @param array<array-key, mixed> $expected
+     * @param array<array-key, array<int, mixed>> $input
+     * @param list<array-key>|null $keys
+     */
     #[Test]
     #[DataProvider('provideGroupToTableData')]
     public function shouldConvertGroupedArrayToTable(
@@ -93,6 +112,9 @@ class ArrTest extends TestCase
         $this->assertSame($expected, $result);
     }
 
+    /**
+     * @return array<array-key, array<int, mixed>>
+     */
     public static function provideGroupToTableData(): array
     {
         return [
@@ -134,6 +156,10 @@ class ArrTest extends TestCase
         ];
     }
 
+    /**
+     * @param array<array-key, mixed> $expected
+     * @param array<array-key, array<array-key, mixed>> $items
+     */
     #[Test]
     #[DataProvider('provideTreeData')]
     public function shouldConvertArrayToTree(
@@ -147,6 +173,9 @@ class ArrTest extends TestCase
         $this->assertSame($expected, $result);
     }
 
+    /**
+     * @return array<array-key, array<int, mixed>>
+     */
     public static function provideTreeData(): array
     {
         return [
@@ -195,6 +224,10 @@ class ArrTest extends TestCase
         ];
     }
 
+    /**
+     * @param array<array-key, mixed> $expected
+     * @param array<array-key, mixed> $tree
+     */
     #[Test]
     #[DataProvider('provideTreeToListData')]
     public function shouldConvertTreeToList(
@@ -207,6 +240,9 @@ class ArrTest extends TestCase
         $this->assertSame($expected, $result);
     }
 
+    /**
+     * @return array<array-key, array<int, mixed>>
+     */
     public static function provideTreeToListData(): array
     {
         return [
@@ -229,6 +265,10 @@ class ArrTest extends TestCase
         ];
     }
 
+    /**
+     * @param array<array-key, mixed> $expected
+     * @param array<int|string, array<array-key, mixed>> $input
+     */
     #[Test]
     #[DataProvider('provideIdAttributeData')]
     public function shouldAddIdAttribute(
@@ -240,6 +280,9 @@ class ArrTest extends TestCase
         $this->assertSame($expected, $result);
     }
 
+    /**
+     * @return array<array-key, array<int, mixed>>
+     */
     public static function provideIdAttributeData(): array
     {
         return [
@@ -268,6 +311,10 @@ class ArrTest extends TestCase
         ];
     }
 
+    /**
+     * @param array<array-key, mixed> $expected
+     * @param array<array-key, mixed> $input
+     */
     #[Test]
     #[DataProvider('provideArrayPathData')]
     public function shouldEnsureArrayAtPath(
@@ -279,6 +326,9 @@ class ArrTest extends TestCase
         $this->assertSame($expected, $input);
     }
 
+    /**
+     * @return array<array-key, array<int, mixed>>
+     */
     public static function provideArrayPathData(): array
     {
         return [
@@ -305,6 +355,10 @@ class ArrTest extends TestCase
         ];
     }
 
+    /**
+     * @param array<array-key, mixed> $expected
+     * @param list<mixed> $input
+     */
     #[Test]
     #[DataProvider('provideSubsetsData')]
     public function shouldGenerateSubsets(
@@ -318,6 +372,9 @@ class ArrTest extends TestCase
         $this->assertSame($expected, $result);
     }
 
+    /**
+     * @return array<array-key, array<int, mixed>>
+     */
     public static function provideSubsetsData(): array
     {
         return [

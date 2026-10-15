@@ -12,7 +12,9 @@ declare(strict_types=1);
 
 namespace Derafu\TestsSupport;
 
+use ArrayObject;
 use Derafu\Support\Encoding;
+use Derafu\Translation\Exception\Core\TranslatableLogicException;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
@@ -47,6 +49,9 @@ class EncodingTest extends TestCase
         $this->assertSame($text, Encoding::utf8encode($text));
     }
 
+    /**
+     * @return array<array-key, array<int, mixed>>
+     */
     public static function provideTextsThatAreAlreadyUtf8(): array
     {
         return [
@@ -109,11 +114,75 @@ class EncodingTest extends TestCase
     }
 
     #[Test]
+    public function shouldConvertOnlyThePublicPropertiesOfAnObject(): void
+    {
+        $object = new EncodingObject();
+
+        $result = Encoding::utf8decode($object);
+
+        $this->assertSame($object, $result);
+        $this->assertSame(self::LATIN1, $object->public);
+        $this->assertSame(self::UTF8, $object->protectedValue());
+        $this->assertSame(self::UTF8, $object->privateValue());
+    }
+
+    #[Test]
+    public function shouldNotConvertTheElementsOfAnIterableObject(): void
+    {
+        $iterable = new ArrayObject(['text' => self::UTF8]);
+        $generator = (static fn () => yield 'text' => self::UTF8)();
+
+        $this->assertSame($iterable, Encoding::utf8decode($iterable));
+        $this->assertSame(['text' => self::UTF8], $iterable->getArrayCopy());
+        $this->assertSame($generator, Encoding::utf8decode($generator));
+    }
+
+    #[Test]
+    public function shouldRejectAnObjectWithAReadonlyPublicProperty(): void
+    {
+        $this->expectException(TranslatableLogicException::class);
+        $this->expectExceptionMessage(
+            'Cannot convert the property "text" of ' . EncodingReadonlyObject::class . ': it is readonly.'
+        );
+
+        Encoding::utf8encode(new EncodingReadonlyObject());
+    }
+
+    #[Test]
     public function shouldGiveBackTheValuesThatAreNotTexts(): void
     {
         $this->assertSame(42, Encoding::utf8encode(42));
         $this->assertSame(1.5, Encoding::utf8decode(1.5));
         $this->assertNull(Encoding::utf8encode(null));
         $this->assertTrue(Encoding::utf8decode(true));
+    }
+}
+
+final class EncodingObject
+{
+    public string $public = "El ni\xc3\xb1o cumpli\xc3\xb3 15 a\xc3\xb1os";
+
+    protected string $protected = 'El niño cumplió 15 años';
+
+    private string $private = 'El niño cumplió 15 años';
+
+    public function protectedValue(): string
+    {
+        return $this->protected;
+    }
+
+    public function privateValue(): string
+    {
+        return $this->private;
+    }
+}
+
+final class EncodingReadonlyObject
+{
+    public readonly string $text;
+
+    public function __construct()
+    {
+        $this->text = 'niño';
     }
 }

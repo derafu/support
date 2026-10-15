@@ -19,7 +19,7 @@ use PHPUnit\Framework\TestCase;
 #[CoversClass(Arr::class)]
 class ArrAutoCastRecursiveTest extends TestCase
 {
-    public function testAutoCastRecursive()
+    public function testAutoCastRecursive(): void
     {
         $array = [
             'integerString' => '42',
@@ -60,7 +60,7 @@ class ArrAutoCastRecursiveTest extends TestCase
         $this->assertSame($expected, $result, 'The array was not transformed as expected.');
     }
 
-    public function testAutoCastRecursiveWithCustomEmptyValue()
+    public function testAutoCastRecursiveWithCustomEmptyValue(): void
     {
         $array = [
             'emptyString' => '',
@@ -81,7 +81,7 @@ class ArrAutoCastRecursiveTest extends TestCase
         $this->assertSame($expected, $result, 'The custom empty value was not applied correctly.');
     }
 
-    public function testAutoCastRecursiveNoCastsUnnecessaryValues()
+    public function testAutoCastRecursiveNoCastsUnnecessaryValues(): void
     {
         $array = [
             'booleanTrue' => true,

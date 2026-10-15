@@ -50,6 +50,9 @@ class DateFormatTest extends TestCase
         Carbon::setTestNow(); // Reset time.
     }
 
+    /**
+     * @return array<array-key, array<int, mixed>>
+     */
     public static function provideAgoData(): array
     {
         return [
@@ -117,6 +120,9 @@ class DateFormatTest extends TestCase
         $this->assertSame($expected, $result);
     }
 
+    /**
+     * @return array<array-key, array<int, mixed>>
+     */
     public static function provideSpanishFormatData(): array
     {
         return [

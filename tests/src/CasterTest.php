@@ -123,10 +123,21 @@ class CasterTest extends TestCase
     public function shouldCastAResourceToItsText(): void
     {
         $resource = fopen('php://memory', 'r');
+        $this->assertIsResource($resource);
 
         $this->assertMatchesRegularExpression('/^Resource id #\d+$/', (string) Caster::cast($resource));
 
         fclose($resource);
+    }
+
+    #[Test]
+    public function shouldCastAClosedResourceToItsType(): void
+    {
+        $resource = fopen('php://memory', 'r');
+        $this->assertIsResource($resource);
+        fclose($resource);
+
+        $this->assertSame('resource (closed)', Caster::cast($resource));
     }
 
     // -------------------------------------------------------------------------
@@ -140,6 +151,9 @@ class CasterTest extends TestCase
         $this->assertNull(Caster::cast($value));
     }
 
+    /**
+     * @return array<array-key, array<int, mixed>>
+     */
     public static function provideNullLiteralStrings(): array
     {
         return [
@@ -166,6 +180,9 @@ class CasterTest extends TestCase
         $this->assertTrue(Caster::cast($value));
     }
 
+    /**
+     * @return array<array-key, array<int, mixed>>
+     */
     public static function provideTrueLiteralStrings(): array
     {
         return [
@@ -187,6 +204,9 @@ class CasterTest extends TestCase
         $this->assertFalse(Caster::cast($value));
     }
 
+    /**
+     * @return array<array-key, array<int, mixed>>
+     */
     public static function provideFalseLiteralStrings(): array
     {
         return [
@@ -215,6 +235,9 @@ class CasterTest extends TestCase
         $this->assertSame($expected, $result);
     }
 
+    /**
+     * @return array<array-key, array<int, mixed>>
+     */
     public static function provideIntegerStrings(): array
     {
         return [
@@ -243,6 +266,9 @@ class CasterTest extends TestCase
         $this->assertSame($expected, $result);
     }
 
+    /**
+     * @return array<array-key, array<int, mixed>>
+     */
     public static function provideFloatStrings(): array
     {
         return [
@@ -273,6 +299,9 @@ class CasterTest extends TestCase
         $this->assertSame($value, $result);
     }
 
+    /**
+     * @return array<array-key, array<int, mixed>>
+     */
     public static function providePlainStrings(): array
     {
         return [
@@ -305,6 +334,9 @@ class CasterTest extends TestCase
         $this->assertSame($expectedType, $result['type']);
     }
 
+    /**
+     * @return array<array-key, array<int, mixed>>
+     */
     public static function provideCastWithTypeData(): array
     {
         return [

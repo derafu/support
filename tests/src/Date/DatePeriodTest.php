@@ -48,6 +48,9 @@ class DatePeriodTest extends TestCase
         $this->assertSame($expected, $result);
     }
 
+    /**
+     * @return array<array-key, array<int, mixed>>
+     */
     public static function providePeriodValidationData(): array
     {
         return [
@@ -115,6 +118,9 @@ class DatePeriodTest extends TestCase
         $this->assertSame($expected, $result);
     }
 
+    /**
+     * @return array<array-key, array<int, mixed>>
+     */
     public static function providePeriod4Data(): array
     {
         return [
@@ -157,6 +163,9 @@ class DatePeriodTest extends TestCase
         $this->assertSame($expected, $result);
     }
 
+    /**
+     * @return array<array-key, array<int, mixed>>
+     */
     public static function providePeriod6Data(): array
     {
         return [
@@ -208,6 +217,9 @@ class DatePeriodTest extends TestCase
         }
     }
 
+    /**
+     * @return array<array-key, array<int, mixed>>
+     */
     public static function providePeriodData(): array
     {
         return [
@@ -230,6 +242,9 @@ class DatePeriodTest extends TestCase
         Carbon::setTestNow(); // Reset time.
     }
 
+    /**
+     * @return array<array-key, array<int, mixed>>
+     */
     public static function provideNextPeriodData(): array
     {
         return [
@@ -254,6 +269,9 @@ class DatePeriodTest extends TestCase
         Carbon::setTestNow(); // Reset time.
     }
 
+    /**
+     * @return array<array-key, array<int, mixed>>
+     */
     public static function providePreviousPeriodData(): array
     {
         return [
@@ -289,6 +307,9 @@ class DatePeriodTest extends TestCase
         $this->assertSame($expected, $result);
     }
 
+    /**
+     * @return array<array-key, array<int, mixed>>
+     */
     public static function provideDaysInMonthData(): array
     {
         return [
@@ -305,5 +326,22 @@ class DatePeriodTest extends TestCase
     {
         $this->expectException(InvalidArgumentException::class);
         Date::formatPeriodSpanish(202413);
+    }
+
+    #[Test]
+    public function shouldUseTheCurrentMonthWhenThereIsNoPeriod(): void
+    {
+        // The current date is 2024-01-15.
+        $this->assertSame('2024-01-01', Date::firstDayPeriod());
+        $this->assertSame('2024-01-31', Date::lastDayPeriod());
+    }
+
+    #[Test]
+    public function shouldNotValidateAPeriodThatIsNeitherAYearNorAYearAndMonth(): void
+    {
+        $this->assertFalse(Date::validPeriod(20241));
+        $this->assertFalse(Date::validPeriod(2024011));
+        $this->assertFalse(Date::validPeriod(202401, length: 4));
+        $this->assertTrue(Date::validPeriod(202401, length: 6));
     }
 }

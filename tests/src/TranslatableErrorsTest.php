@@ -136,7 +136,7 @@ final class TranslatableErrorsTest extends TestCase
             ],
             'Hydrator::createAndHydrate of a class that does not exist' => [
                 // A class that does not exist, on purpose.
-                // @phpstan-ignore argument.type
+                // @phpstan-ignore argument.type (a class that does not exist, on purpose)
                 fn () => Hydrator::createAndHydrate('NoSuchClass', []),
                 LogicException::class,
                 'Failed to create instance of NoSuchClass: Class "NoSuchClass" does not exist',
