@@ -12,6 +12,8 @@ declare(strict_types=1);
 
 namespace Derafu\TestsSupport;
 
+use DateTimeImmutable;
+use DateTimeInterface;
 use Derafu\Support\ArrayType;
 use Derafu\Translation\Contract\TranslatableInterface;
 use Derafu\Translation\Exception\Logic\TranslatableInvalidArgumentException;
@@ -52,6 +54,12 @@ final class ArrayTypeTest extends TestCase
             'one of, last' => [ArrayType::oneOf(ArrayType::bool(), ArrayType::map()), ['a' => 1]],
             'nullable with a value' => [ArrayType::string()->nullable(), 'a'],
             'nullable with null' => [ArrayType::string()->nullable(), null],
+            'non-empty string' => [ArrayType::nonEmptyString(), 'a'],
+            'literal text' => [ArrayType::literal('asc', 'desc'), 'desc'],
+            'literal false' => [ArrayType::literal(false), false],
+            'literal int' => [ArrayType::literal(1, 2), 2],
+            'instance of a class' => [ArrayType::instanceOf(stdClass::class), new stdClass()],
+            'date that is an object' => [ArrayType::dateTime(), new DateTimeImmutable('2026-01-02')],
         ];
     }
 
@@ -89,6 +97,18 @@ final class ArrayTypeTest extends TestCase
             'map of ints with a list' => [ArrayType::mapOf(ArrayType::int()), [1, 2], 'object<int>'],
             'one of' => [ArrayType::oneOf(ArrayType::bool(), ArrayType::map()), 'a', 'bool|object'],
             'nullable' => [ArrayType::string()->nullable(), 1, 'string'],
+            'non-empty string with an empty one' => [ArrayType::nonEmptyString(), '', 'non-empty-string'],
+            'non-empty string with spaces' => [ArrayType::nonEmptyString(), '  ', 'non-empty-string'],
+            'non-empty string with an int' => [ArrayType::nonEmptyString(), 1, 'non-empty-string'],
+            'literal text with another text' => [ArrayType::literal('asc', 'desc'), 'up', "'asc'|'desc'"],
+            'literal false with 0' => [ArrayType::literal(false), 0, 'false'],
+            'literal int with a numeric string' => [ArrayType::literal(1, 2), '1', '1|2'],
+            'instance of a class with a string' => [ArrayType::instanceOf(stdClass::class), 'a', 'stdClass'],
+            'instance of a class with another object' => [ArrayType::instanceOf(stdClass::class), new DateTimeImmutable(), 'stdClass'],
+            'date with a text that is not a date' => [ArrayType::dateTime(), 'not a date', 'date'],
+            'date with an empty text' => [ArrayType::dateTime(), '  ', 'date'],
+            'date with a float' => [ArrayType::dateTime(), 1.5, 'date'],
+            'date with an array' => [ArrayType::dateTime(), [], 'date'],
         ];
     }
 
@@ -131,8 +151,82 @@ final class ArrayTypeTest extends TestCase
     }
 
     #[Test]
+    public function shouldConvertADateFromATimestampOrAText(): void
+    {
+        $fromInt = ArrayType::dateTime()->parse(1768435200, 'key');
+        $fromText = ArrayType::dateTime()->parse('2026-01-15', 'key');
+
+        $this->assertInstanceOf(DateTimeInterface::class, $fromInt);
+        $this->assertSame(1768435200, $fromInt->getTimestamp());
+        $this->assertSame('2026-01-15', $fromText->format('Y-m-d'));
+    }
+
+    #[Test]
+    public function shouldKeepTheLiteralFalseApartFromTheOtherTypes(): void
+    {
+        $type = ArrayType::oneOf(ArrayType::string(), ArrayType::literal(false));
+
+        $this->assertSame('a.png', $type->parse('a.png', 'image'));
+        $this->assertFalse($type->parse(false, 'image'));
+
+        $this->expectException(TranslatableInvalidArgumentException::class);
+        $this->expectExceptionMessage('The key "image" must be of type string|false, bool given.');
+
+        $type->parse(true, 'image');
+    }
+
+    #[Test]
+    public function shouldSayWhereTheArrayComesFromInEveryError(): void
+    {
+        $types = [
+            ArrayType::string(),
+            ArrayType::listOf(ArrayType::string()),
+            ArrayType::mapOf(ArrayType::int()),
+            ArrayType::oneOf(ArrayType::bool(), ArrayType::map()),
+            ArrayType::string()->nullable(),
+            ArrayType::literal('a'),
+            ArrayType::dateTime(),
+        ];
+
+        foreach ($types as $type) {
+            try {
+                $type->parse(1.5, 'key', 'docs/guide.md');
+                $this->fail('The value should be rejected.');
+            } catch (TranslatableInvalidArgumentException $e) {
+                $this->assertStringStartsWith('The key "key" of docs/guide.md must be of type ', $e->getMessage());
+            }
+        }
+    }
+
+    #[Test]
+    public function shouldSayWhereTheArrayComesFromInTheItemThatFails(): void
+    {
+        $this->expectExceptionMessage('The key "tags.1" of docs/guide.md must be of type string, int given.');
+
+        ArrayType::listOf(ArrayType::string())->parse(['a', 1], 'tags', 'docs/guide.md');
+    }
+
+    #[Test]
+    public function shouldAcceptACustomTypeThatDoesNotKnowTheSource(): void
+    {
+        $even = new ArrayType('even', static fn (mixed $value, string $path): int
+            => is_int($value) && $value % 2 === 0 ? $value : throw ArrayType::mismatch($path, 'even', $value));
+
+        $this->assertSame(4, $even->parse(4, 'key', 'docs/guide.md'));
+
+        $this->expectExceptionMessage('The key "key" must be of type even, int given.');
+
+        $even->parse(3, 'key', 'docs/guide.md');
+    }
+
+    #[Test]
     public function shouldNameTheTypes(): void
     {
+        $this->assertSame('non-empty-string', ArrayType::nonEmptyString()->name);
+        $this->assertSame("'asc'|'desc'", ArrayType::literal('asc', 'desc')->name);
+        $this->assertSame('false', ArrayType::literal(false)->name);
+        $this->assertSame('stdClass', ArrayType::instanceOf(stdClass::class)->name);
+        $this->assertSame('date', ArrayType::dateTime()->name);
         $this->assertSame('list<object<int>>', ArrayType::listOf(ArrayType::mapOf(ArrayType::int()))->name);
         $this->assertSame('bool|object', ArrayType::oneOf(ArrayType::bool(), ArrayType::map())->name);
         $this->assertSame('string|null', ArrayType::string()->nullable()->name);

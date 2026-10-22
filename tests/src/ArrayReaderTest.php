@@ -13,6 +13,7 @@ declare(strict_types=1);
 namespace Derafu\TestsSupport;
 
 use Closure;
+use DateTimeInterface;
 use Derafu\Support\ArrayReader;
 use Derafu\Support\ArrayType;
 use Derafu\Translation\Exception\Logic\TranslatableInvalidArgumentException;
@@ -204,5 +205,134 @@ final class ArrayReaderTest extends TestCase
     public function shouldReturnTheWholeArray(): void
     {
         $this->assertSame(['a' => 1], ArrayReader::from(['a' => 1])->toArray());
+    }
+
+    #[Test]
+    public function shouldGiveTheDefaultThatIsNotNullAsTheTypeItHas(): void
+    {
+        $reader = ArrayReader::from(['present' => 'a']);
+
+        $this->assertSame('GET', $reader->string('method', 'GET'));
+        $this->assertSame('a', $reader->string('present', 'GET'));
+        $this->assertSame(80, $reader->int('port', 80));
+        $this->assertSame(1.5, $reader->float('ratio', 1.5));
+        $this->assertSame(2, $reader->number('size', 2));
+        $this->assertTrue($reader->bool('debug', true));
+        $this->assertNull($reader->string('method'));
+    }
+
+    #[Test]
+    public function shouldReadANonEmptyStringAndADate(): void
+    {
+        $reader = ArrayReader::from(['path' => '/api', 'blank' => ' ', 'date' => '2026-01-15', 'time' => 1768435200]);
+
+        $this->assertSame('/api', $reader->nonEmptyString('path'));
+        $this->assertNull($reader->nonEmptyString('missing'));
+        $date = $reader->dateTime('date');
+        $this->assertInstanceOf(DateTimeInterface::class, $date);
+        $this->assertSame('2026-01-15', $date->format('Y-m-d'));
+        $this->assertSame(1768435200, $reader->dateTime('time')?->getTimestamp());
+        $this->assertNull($reader->dateTime('missing'));
+
+        $this->expectException(TranslatableInvalidArgumentException::class);
+        $this->expectExceptionMessage('The key "blank" must be of type non-empty-string, string given.');
+
+        $reader->nonEmptyString('blank');
+    }
+
+    #[Test]
+    public function shouldReadAListOfObjectsAsReadersThatReportTheirPosition(): void
+    {
+        $reader = ArrayReader::from([
+            'parameters' => [['name' => 'id', 'in' => 'path'], ['name' => 5]],
+        ]);
+
+        $readers = $reader->readers('parameters');
+
+        $this->assertNotNull($readers);
+        $this->assertCount(2, $readers);
+        $this->assertSame('id', $readers[0]->string('name'));
+        $this->assertSame('path', $readers[0]->string('in'));
+
+        $this->expectException(TranslatableInvalidArgumentException::class);
+        $this->expectExceptionMessage('The key "parameters.1.name" must be of type string, int given.');
+
+        $readers[1]->string('name');
+    }
+
+    #[Test]
+    public function shouldReturnNullAndRejectWhatIsNotAListOfObjectsInReaders(): void
+    {
+        $reader = ArrayReader::from(['one' => ['a' => 1], 'items' => ['a', 'b']]);
+
+        $this->assertNull($reader->readers('missing'));
+        $this->assertSame([], ArrayReader::from(['empty' => []])->readers('empty'));
+
+        $this->expectException(TranslatableInvalidArgumentException::class);
+        $this->expectExceptionMessage('The key "items.0" must be of type object, string given.');
+
+        $reader->readers('items');
+    }
+
+    #[Test]
+    public function shouldAllowOnlyTheKeysThatAreSaid(): void
+    {
+        $reader = ArrayReader::from(['path' => '/', 'maxAge' => 10]);
+
+        $this->assertSame($reader, $reader->onlyKeys('path', 'maxAge', 'other'));
+        $this->assertSame('/', $reader->onlyKeys('path', 'maxAge')->string('path'));
+    }
+
+    #[Test]
+    public function shouldRejectAKeyThatIsNotAllowed(): void
+    {
+        $reader = ArrayReader::from(['path' => '/', 'allowedOrgins' => ['*']]);
+
+        $this->expectException(TranslatableInvalidArgumentException::class);
+        $this->expectExceptionMessage('The key "allowedOrgins" is not allowed; the allowed keys are: path, allowedOrigins.');
+
+        $reader->onlyKeys('path', 'allowedOrigins');
+    }
+
+    #[Test]
+    public function shouldRejectAKeyThatIsNotAllowedWithItsPathAndItsSource(): void
+    {
+        $rule = ArrayReader::from(['rules' => [['path' => '/', 'typo' => 1]]], 'config/cors.yaml')->readers('rules');
+
+        $this->assertNotNull($rule);
+        $this->expectException(TranslatableInvalidArgumentException::class);
+        $this->expectExceptionMessage('The key "rules.0.typo" of config/cors.yaml is not allowed; the allowed keys are: path.');
+
+        $rule[0]->onlyKeys('path');
+    }
+
+    #[Test]
+    public function shouldSayWhereTheArrayComesFromInTheErrorsOfTheReaderAndOfTheOnesItCreates(): void
+    {
+        $reader = ArrayReader::from(['title' => 5, 'meta' => ['count' => 'x'], 'items' => [['id' => 'y']]], 'docs/guide.md');
+        $items = $reader->readers('items');
+        $this->assertNotNull($items);
+
+        $checks = [
+            fn () => $reader->string('title'),
+            fn () => $reader->require('missing', ArrayType::string()),
+            fn () => $reader->reader('meta')?->int('count'),
+            fn () => $items[0]->int('id'),
+        ];
+        $messages = [
+            'The key "title" of docs/guide.md must be of type string, int given.',
+            'The key "missing" of docs/guide.md is required.',
+            'The key "meta.count" of docs/guide.md must be of type int, string given.',
+            'The key "items.0.id" of docs/guide.md must be of type int, string given.',
+        ];
+
+        foreach ($checks as $i => $check) {
+            try {
+                $check();
+                $this->fail('The check should fail.');
+            } catch (TranslatableInvalidArgumentException $e) {
+                $this->assertSame($messages[$i], $e->getMessage());
+            }
+        }
     }
 }

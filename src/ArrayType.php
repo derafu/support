@@ -13,15 +13,21 @@ declare(strict_types=1);
 namespace Derafu\Support;
 
 use Closure;
+use DateTimeImmutable;
+use DateTimeInterface;
 use Derafu\Translation\Exception\Logic\TranslatableInvalidArgumentException as InvalidArgumentException;
+use Exception;
 
 /**
  * A type that a value read from an array can be checked against.
  *
- * Types do not coerce: `"3"` is not an `int`. They are built from the simple
- * ones (`string()`, `int()`, `map()`, ...) and composed with `listOf()`,
- * `mapOf()`, `oneOf()` and `nullable()`, and every composition keeps the
- * generic type that `ArrayReader` (and PHPStan) will know:
+ * Types do not coerce: `"3"` is not an `int`. The only one that converts is
+ * `dateTime()`, which says so with its name: a date is written as a text or a
+ * timestamp in YAML and JSON, and what is wanted is a date. They are built from
+ * the simple ones (`string()`, `int()`, `map()`, ...), the exact ones
+ * (`literal()`, `instanceOf()`) and composed with `listOf()`, `mapOf()`,
+ * `oneOf()` and `nullable()`, and every composition keeps the generic type
+ * that `ArrayReader` (and PHPStan) will know:
  *
  *     ArrayType::mapOf(ArrayType::listOf(ArrayType::string()));
  *     // ArrayType<array<string, list<string>>>
@@ -35,8 +41,10 @@ final readonly class ArrayType
 {
     /**
      * @param string $name Name of the type, as reported in the errors.
-     * @param Closure(mixed, string): T $parse Receives the value and its path,
-     * returns the value as `T` or throws what `mismatch()` creates.
+     * @param Closure(mixed, string, string|null): T $parse Receives the value,
+     * its path and the source of the array (if it has one), returns the value as
+     * `T` or throws what `mismatch()` creates. A closure that does not need the
+     * source can leave it out of its parameters.
      */
     public function __construct(
         public string $name,
@@ -49,12 +57,14 @@ final readonly class ArrayType
      *
      * @param mixed $value The value to check.
      * @param string $path Path of the value, for the error ("a.b.0").
+     * @param string|null $source Where the array comes from (a file, a request,
+     * anything that says it), for the error.
      * @return T The value.
      * @throws InvalidArgumentException If the value is not of the type.
      */
-    public function parse(mixed $value, string $path = ''): mixed
+    public function parse(mixed $value, string $path = '', ?string $source = null): mixed
     {
-        return ($this->parse)($value, $path);
+        return ($this->parse)($value, $path, $source);
     }
 
     /**
@@ -63,12 +73,24 @@ final readonly class ArrayType
      * @param string $path Path of the value.
      * @param string $expected Name of the expected type.
      * @param mixed $given The value that was found.
+     * @param string|null $source Where the array comes from, if it is known.
      */
     public static function mismatch(
         string $path,
         string $expected,
-        mixed $given
+        mixed $given,
+        ?string $source = null
     ): InvalidArgumentException {
+        if ($source !== null) {
+            return new InvalidArgumentException([
+                'The key "{key}" of {source} must be of type {expected}, {given} given.',
+                'key' => $path,
+                'source' => $source,
+                'expected' => $expected,
+                'given' => get_debug_type($given),
+            ]);
+        }
+
         return new InvalidArgumentException([
             'The key "{key}" must be of type {expected}, {given} given.',
             'key' => $path,
@@ -103,8 +125,8 @@ final readonly class ArrayType
      */
     public static function string(): self
     {
-        return new self('string', static fn (mixed $value, string $path): string
-            => is_string($value) ? $value : throw self::mismatch($path, 'string', $value));
+        return new self('string', static fn (mixed $value, string $path, ?string $source): string
+            => is_string($value) ? $value : throw self::mismatch($path, 'string', $value, $source));
     }
 
     /**
@@ -112,8 +134,8 @@ final readonly class ArrayType
      */
     public static function int(): self
     {
-        return new self('int', static fn (mixed $value, string $path): int
-            => is_int($value) ? $value : throw self::mismatch($path, 'int', $value));
+        return new self('int', static fn (mixed $value, string $path, ?string $source): int
+            => is_int($value) ? $value : throw self::mismatch($path, 'int', $value, $source));
     }
 
     /**
@@ -121,8 +143,8 @@ final readonly class ArrayType
      */
     public static function float(): self
     {
-        return new self('float', static fn (mixed $value, string $path): float
-            => is_float($value) ? $value : throw self::mismatch($path, 'float', $value));
+        return new self('float', static fn (mixed $value, string $path, ?string $source): float
+            => is_float($value) ? $value : throw self::mismatch($path, 'float', $value, $source));
     }
 
     /**
@@ -132,10 +154,10 @@ final readonly class ArrayType
      */
     public static function number(): self
     {
-        return new self('float|int', static fn (mixed $value, string $path): float|int
+        return new self('float|int', static fn (mixed $value, string $path, ?string $source): float|int
             => is_int($value) || is_float($value)
                 ? $value
-                : throw self::mismatch($path, 'float|int', $value));
+                : throw self::mismatch($path, 'float|int', $value, $source));
     }
 
     /**
@@ -143,8 +165,8 @@ final readonly class ArrayType
      */
     public static function bool(): self
     {
-        return new self('bool', static fn (mixed $value, string $path): bool
-            => is_bool($value) ? $value : throw self::mismatch($path, 'bool', $value));
+        return new self('bool', static fn (mixed $value, string $path, ?string $source): bool
+            => is_bool($value) ? $value : throw self::mismatch($path, 'bool', $value, $source));
     }
 
     /**
@@ -154,10 +176,10 @@ final readonly class ArrayType
      */
     public static function scalar(): self
     {
-        return new self('bool|float|int|string', static fn (mixed $value, string $path): bool|float|int|string
+        return new self('bool|float|int|string', static fn (mixed $value, string $path, ?string $source): bool|float|int|string
             => is_scalar($value)
                 ? $value
-                : throw self::mismatch($path, 'bool|float|int|string', $value));
+                : throw self::mismatch($path, 'bool|float|int|string', $value, $source));
     }
 
     /**
@@ -167,8 +189,8 @@ final readonly class ArrayType
      */
     public static function array(): self
     {
-        return new self('array', static fn (mixed $value, string $path): array
-            => is_array($value) ? $value : throw self::mismatch($path, 'array', $value));
+        return new self('array', static fn (mixed $value, string $path, ?string $source): array
+            => is_array($value) ? $value : throw self::mismatch($path, 'array', $value, $source));
     }
 
     /**
@@ -182,9 +204,9 @@ final readonly class ArrayType
      */
     public static function map(): self
     {
-        return new self('object', static function (mixed $value, string $path): array {
+        return new self('object', static function (mixed $value, string $path, ?string $source): array {
             if (!is_array($value) || ($value !== [] && array_is_list($value))) {
-                throw self::mismatch($path, 'object', $value);
+                throw self::mismatch($path, 'object', $value, $source);
             }
 
             /** @var array<string, mixed> $value */
@@ -199,9 +221,9 @@ final readonly class ArrayType
      */
     public static function list(): self
     {
-        return new self('list', static function (mixed $value, string $path): array {
+        return new self('list', static function (mixed $value, string $path, ?string $source): array {
             if (!is_array($value) || !array_is_list($value)) {
-                throw self::mismatch($path, 'list', $value);
+                throw self::mismatch($path, 'list', $value, $source);
             }
 
             return $value;
@@ -219,13 +241,13 @@ final readonly class ArrayType
     {
         return new self(
             'list<' . $item->name . '>',
-            static function (mixed $value, string $path) use ($item): array {
+            static function (mixed $value, string $path, ?string $source) use ($item): array {
                 if (!is_array($value) || !array_is_list($value)) {
-                    throw self::mismatch($path, 'list<' . $item->name . '>', $value);
+                    throw self::mismatch($path, 'list<' . $item->name . '>', $value, $source);
                 }
 
                 return array_map(
-                    static fn (mixed $v, int $i): mixed => $item->parse($v, self::path($path, $i)),
+                    static fn (mixed $v, int $i): mixed => $item->parse($v, self::path($path, $i), $source),
                     $value,
                     array_keys($value)
                 );
@@ -244,20 +266,108 @@ final readonly class ArrayType
     {
         return new self(
             'object<' . $item->name . '>',
-            static function (mixed $value, string $path) use ($item): array {
+            static function (mixed $value, string $path, ?string $source) use ($item): array {
                 if (!is_array($value) || ($value !== [] && array_is_list($value))) {
-                    throw self::mismatch($path, 'object<' . $item->name . '>', $value);
+                    throw self::mismatch($path, 'object<' . $item->name . '>', $value, $source);
                 }
 
                 $result = [];
                 foreach ($value as $key => $v) {
-                    $result[$key] = $item->parse($v, self::path($path, $key));
+                    $result[$key] = $item->parse($v, self::path($path, $key), $source);
                 }
 
                 /** @var array<string, I> $result */
                 return $result;
             }
         );
+    }
+
+    /**
+     * A string that is not empty, nor only spaces.
+     *
+     * @return self<non-empty-string>
+     */
+    public static function nonEmptyString(): self
+    {
+        return new self('non-empty-string', static fn (mixed $value, string $path, ?string $source): string
+            => is_string($value) && $value !== '' && trim($value) !== ''
+                ? $value
+                : throw self::mismatch($path, 'non-empty-string', $value, $source));
+    }
+
+    /**
+     * Exactly one of some values: `literal('asc', 'desc')`, `literal(false)`.
+     *
+     * The comparison is strict: `0` is not `false`.
+     *
+     * @template L of bool|int|string
+     * @param L $first
+     * @param L ...$others
+     * @return self<L>
+     */
+    public static function literal(bool|int|string $first, bool|int|string ...$others): self
+    {
+        $values = [$first, ...$others];
+        $name = implode('|', array_map(static fn (bool|int|string $v): string => var_export($v, true), $values));
+
+        return new self($name, static function (mixed $value, string $path, ?string $source) use ($values, $name): mixed {
+            if (!in_array($value, $values, true)) {
+                throw self::mismatch($path, $name, $value, $source);
+            }
+
+            return $value;
+        });
+    }
+
+    /**
+     * An object of a class or an interface.
+     *
+     * @template O of object
+     * @param class-string<O> $class
+     * @return self<O>
+     */
+    public static function instanceOf(string $class): self
+    {
+        return new self($class, static function (mixed $value, string $path, ?string $source) use ($class): object {
+            if (!$value instanceof $class) {
+                throw self::mismatch($path, $class, $value, $source);
+            }
+
+            return $value;
+        });
+    }
+
+    /**
+     * A date: a `DateTimeInterface` (it is given as it is), a timestamp (an
+     * `int`) or a text that PHP reads as a date.
+     *
+     * It is the only type that converts, and a date that was not an object comes
+     * as a `DateTimeImmutable`. A text that PHP can not read as a date is an
+     * error, as is anything else.
+     *
+     * @return self<DateTimeInterface>
+     */
+    public static function dateTime(): self
+    {
+        return new self('date', static function (mixed $value, string $path, ?string $source): DateTimeInterface {
+            if ($value instanceof DateTimeInterface) {
+                return $value;
+            }
+
+            if (is_int($value)) {
+                return new DateTimeImmutable('@' . $value);
+            }
+
+            if (is_string($value) && trim($value) !== '') {
+                try {
+                    return new DateTimeImmutable($value);
+                } catch (Exception) {
+                    // It is not a date: the error is the one of any other type.
+                }
+            }
+
+            throw self::mismatch($path, 'date', $value, $source);
+        });
     }
 
     /**
@@ -275,16 +385,16 @@ final readonly class ArrayType
 
         return new self(
             $name,
-            static function (mixed $value, string $path) use ($types, $name): mixed {
+            static function (mixed $value, string $path, ?string $source) use ($types, $name): mixed {
                 foreach ($types as $type) {
                     try {
-                        return $type->parse($value, $path);
+                        return $type->parse($value, $path, $source);
                     } catch (InvalidArgumentException) {
                         // Next type.
                     }
                 }
 
-                throw self::mismatch($path, $name, $value);
+                throw self::mismatch($path, $name, $value, $source);
             }
         );
     }
@@ -300,8 +410,8 @@ final readonly class ArrayType
 
         return new self(
             $this->name . '|null',
-            static fn (mixed $value, string $path): mixed
-                => $value === null ? null : $type->parse($value, $path)
+            static fn (mixed $value, string $path, ?string $source): mixed
+                => $value === null ? null : $type->parse($value, $path, $source)
         );
     }
 }

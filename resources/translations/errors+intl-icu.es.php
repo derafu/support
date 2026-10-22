@@ -22,6 +22,14 @@ return [
         'La clave "{key}" es obligatoria.',
     'The key "{key}" must be of type {expected}, {given} given.' =>
         'La clave "{key}" debe ser de tipo {expected}, se entregó {given}.',
+    'The key "{key}" is not allowed; the allowed keys are: {allowed}.' =>
+        'La clave "{key}" no está permitida; las claves permitidas son: {allowed}.',
+    'The key "{key}" of {source} is required.' =>
+        'La clave "{key}" de {source} es obligatoria.',
+    'The key "{key}" of {source} must be of type {expected}, {given} given.' =>
+        'La clave "{key}" de {source} debe ser de tipo {expected}, se entregó {given}.',
+    'The key "{key}" of {source} is not allowed; the allowed keys are: {allowed}.' =>
+        'La clave "{key}" de {source} no está permitida; las claves permitidas son: {allowed}.',
 
     // Arr.
     'Failed to generate the XML.' =>
