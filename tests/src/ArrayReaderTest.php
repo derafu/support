@@ -13,6 +13,7 @@ declare(strict_types=1);
 namespace Derafu\TestsSupport;
 
 use Closure;
+use DateTimeImmutable;
 use DateTimeInterface;
 use Derafu\Support\ArrayReader;
 use Derafu\Support\ArrayType;
@@ -334,5 +335,136 @@ final class ArrayReaderTest extends TestCase
                 $this->assertSame($messages[$i], $e->getMessage());
             }
         }
+    }
+
+    /** @return array<string, array{Closure(ArrayReader): mixed, mixed, mixed, mixed}> */
+    public static function requiredValues(): array
+    {
+        return [
+            'string' => [fn (ArrayReader $r) => $r->requireString('k'), 'a', 'a', 1],
+            'int' => [fn (ArrayReader $r) => $r->requireInt('k'), 0, 0, '0'],
+            'float' => [fn (ArrayReader $r) => $r->requireFloat('k'), 1.5, 1.5, '1.5'],
+            'number' => [fn (ArrayReader $r) => $r->requireNumber('k'), 2, 2, '2'],
+            'bool' => [fn (ArrayReader $r) => $r->requireBool('k'), false, false, 0],
+            'nonEmptyString' => [fn (ArrayReader $r) => $r->requireNonEmptyString('k'), ' a ', ' a ', ' '],
+            'dateTime' => [fn (ArrayReader $r) => $r->requireDateTime('k')->format('Y-m-d'), '2026-01-15', '2026-01-15', []],
+            'array' => [fn (ArrayReader $r) => $r->requireArray('k'), [1, 'a' => 2], [1, 'a' => 2], false],
+            'map' => [fn (ArrayReader $r) => $r->requireMap('k'), ['a' => 1], ['a' => 1], ['a']],
+            'list' => [fn (ArrayReader $r) => $r->requireList('k'), ['a', 1], ['a', 1], ['a' => 1]],
+            'stringList' => [fn (ArrayReader $r) => $r->requireStringList('k'), ['a', 'b'], ['a', 'b'], ['a', 1]],
+            'intList' => [fn (ArrayReader $r) => $r->requireIntList('k'), [0, 1], [0, 1], ['0']],
+            'scalarList' => [fn (ArrayReader $r) => $r->requireScalarList('k'), [false, 0, 1.5, 'a'], [false, 0, 1.5, 'a'], [null]],
+            'listOf' => [
+                fn (ArrayReader $r) => $r->requireListOf('k', ArrayType::mapOf(ArrayType::string())),
+                [['name' => 'a']], [['name' => 'a']], [['name' => 1]],
+            ],
+            'mapOf' => [
+                fn (ArrayReader $r) => $r->requireMapOf('k', ArrayType::listOf(ArrayType::int())),
+                ['ids' => [1, 2]], ['ids' => [1, 2]], ['ids' => ['1']],
+            ],
+            'reader' => [
+                fn (ArrayReader $r) => $r->requireReader('k')->toArray(),
+                ['name' => 'a'], ['name' => 'a'], ['a'],
+            ],
+            'readers' => [
+                fn (ArrayReader $r) => array_map(
+                    static fn (ArrayReader $item): array => $item->toArray(),
+                    $r->requireReaders('k')
+                ),
+                [['name' => 'a'], ['name' => 'b']], [['name' => 'a'], ['name' => 'b']], [['name' => 'a'], ['b']],
+            ],
+        ];
+    }
+
+    /** @param Closure(ArrayReader): mixed $read */
+    #[DataProvider('requiredValues')]
+    public function testRequiredReadersReturnTheirTypedValues(
+        Closure $read,
+        mixed $value,
+        mixed $expected,
+        mixed $invalid
+    ): void {
+        $reader = ArrayReader::from(['k' => $value]);
+
+        $this->assertSame($expected, $read($reader));
+        $this->assertSame(['k' => $value], $reader->toArray());
+    }
+
+    /** @param Closure(ArrayReader): mixed $read */
+    #[DataProvider('requiredValues')]
+    public function testRequiredReadersRejectMissingAndNullValues(
+        Closure $read,
+        mixed $value,
+        mixed $expected,
+        mixed $invalid
+    ): void {
+        foreach ([[], ['k' => null]] as $data) {
+            try {
+                $read(ArrayReader::from($data, 'request data'));
+                $this->fail('A required key cannot be absent or null.');
+            } catch (TranslatableInvalidArgumentException $e) {
+                $this->assertSame('The key "k" of request data is required.', $e->getMessage());
+            }
+        }
+    }
+
+    /** @param Closure(ArrayReader): mixed $read */
+    #[DataProvider('requiredValues')]
+    public function testRequiredReadersRejectWrongTypesAndKeepTheSourceAndPath(
+        Closure $read,
+        mixed $value,
+        mixed $expected,
+        mixed $invalid
+    ): void {
+        $reader = ArrayReader::from(['profile' => ['k' => $invalid]], 'request data')->requireReader('profile');
+        $this->expectException(TranslatableInvalidArgumentException::class);
+        $this->expectExceptionMessage('The key "profile.k');
+        $this->expectExceptionMessage('of request data must be of type');
+
+        $read($reader);
+    }
+
+    public function testRequiredReadersKeepFalsyValuesAndAllowEmptyCollections(): void
+    {
+        $reader = ArrayReader::from(['text' => '', 'integer' => 0, 'number' => 0.0, 'enabled' => false, 'empty' => []]);
+
+        $this->assertSame('', $reader->requireString('text'));
+        $this->assertSame(0, $reader->requireInt('integer'));
+        $this->assertSame(0.0, $reader->requireNumber('number'));
+        $this->assertFalse($reader->requireBool('enabled'));
+        $this->assertSame([], $reader->requireArray('empty'));
+        $this->assertSame([], $reader->requireMap('empty'));
+        $this->assertSame([], $reader->requireList('empty'));
+        $this->assertSame([], $reader->requireStringList('empty'));
+        $this->assertSame([], $reader->requireIntList('empty'));
+        $this->assertSame([], $reader->requireScalarList('empty'));
+        $this->assertSame([], $reader->requireListOf('empty', ArrayType::string()));
+        $this->assertSame([], $reader->requireMapOf('empty', ArrayType::string()));
+        $this->assertSame([], $reader->requireReader('empty')->toArray());
+        $this->assertSame([], $reader->requireReaders('empty'));
+    }
+
+    public function testRequiredNestedReadersPreserveTheirPathsAndSource(): void
+    {
+        $reader = ArrayReader::from([
+            'settings' => [
+                'rules' => [['name' => 'first'], ['name' => 2]],
+            ],
+        ], 'config/rules.yaml')->requireReader('settings');
+        $rules = $reader->requireReaders('rules');
+        $this->assertSame('first', $rules[0]->requireString('name'));
+        $this->expectException(TranslatableInvalidArgumentException::class);
+        $this->expectExceptionMessage('The key "settings.rules.1.name" of config/rules.yaml must be of type string, int given.');
+
+        $rules[1]->requireString('name');
+    }
+
+    public function testRequiredDateTimeKeepsTheExistingDateConversionPolicy(): void
+    {
+        $date = new DateTimeImmutable('@1768435200');
+        $reader = ArrayReader::from(['date' => $date, 'timestamp' => 1768435200]);
+
+        $this->assertSame($date, $reader->requireDateTime('date'));
+        $this->assertSame(1768435200, $reader->requireDateTime('timestamp')->getTimestamp());
     }
 }
