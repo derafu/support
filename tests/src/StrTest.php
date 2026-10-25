@@ -12,7 +12,6 @@ declare(strict_types=1);
 
 namespace Derafu\TestsSupport;
 
-use Derafu\Support\Arr;
 use Derafu\Support\Encoding;
 use Derafu\Support\Str;
 use Derafu\Translation\Exception\Core\TranslatableRuntimeException;
@@ -26,7 +25,6 @@ use stdClass;
 use Stringable;
 
 #[CoversClass(Str::class)]
-#[CoversClass(Arr::class)]
 #[CoversClass(Encoding::class)]
 class StrTest extends TestCase
 {

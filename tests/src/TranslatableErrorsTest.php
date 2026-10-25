@@ -14,7 +14,6 @@ namespace Derafu\TestsSupport;
 
 use ArrayObject;
 use Closure;
-use Derafu\Support\Arr;
 use Derafu\Support\Csv;
 use Derafu\Support\Date;
 use Derafu\Support\Factory;
@@ -34,7 +33,6 @@ use Throwable;
  * What the helpers report when they fail is a translatable error, of the same
  * kind as before and saying the same.
  */
-#[CoversClass(Arr::class)]
 #[CoversClass(Csv::class)]
 #[CoversClass(Date::class)]
 #[CoversClass(Factory::class)]
@@ -69,11 +67,6 @@ final class TranslatableErrorsTest extends TestCase
         $dir = $this->directory;
 
         return [
-            'Arr::tableToAssociative' => [
-                fn () => Arr::tableToAssociative([['a', 'b', 'c']]),
-                InvalidArgumentException::class,
-                'Row 0 must have exactly 2 columns.',
-            ],
             'Csv::read of a file that does not exist' => [
                 fn () => Csv::read('/no/such.csv'),
                 RuntimeException::class,

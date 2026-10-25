@@ -12,6 +12,7 @@ declare(strict_types=1);
 
 namespace Derafu\Support;
 
+use Derafu\Array\ArrayPath;
 use Derafu\Translation\Exception\Core\TranslatableRuntimeException as RuntimeException;
 use Derafu\Translation\Exception\Logic\TranslatableInvalidArgumentException as InvalidArgumentException;
 use Stringable;
@@ -80,7 +81,7 @@ final class Str
         array $data,
         string $style = 'mustache'
     ): string {
-        $flatData = Arr::dot($data);
+        $flatData = ArrayPath::flatten($data);
 
         // Define placeholder patterns.
         $patterns = [

@@ -11,36 +11,6 @@ declare(strict_types=1);
  */
 
 return [
-    // Caster.
-    'The value must be a number, {given} given.' =>
-        'El valor debe ser un número, se entregó {given}.',
-    'The value must be text, {given} given.' =>
-        'El valor debe ser texto, se entregó {given}.',
-
-    // ArrayReader and ArrayType.
-    'The key "{key}" is required.' =>
-        'La clave "{key}" es obligatoria.',
-    'The key "{key}" must be of type {expected}, {given} given.' =>
-        'La clave "{key}" debe ser de tipo {expected}, se entregó {given}.',
-    'The key "{key}" is not allowed; the allowed keys are: {allowed}.' =>
-        'La clave "{key}" no está permitida; las claves permitidas son: {allowed}.',
-    'The key "{key}" of {source} is required.' =>
-        'La clave "{key}" de {source} es obligatoria.',
-    'The key "{key}" of {source} must be of type {expected}, {given} given.' =>
-        'La clave "{key}" de {source} debe ser de tipo {expected}, se entregó {given}.',
-    'The key "{key}" of {source} is not allowed; the allowed keys are: {allowed}.' =>
-        'La clave "{key}" de {source} no está permitida; las claves permitidas son: {allowed}.',
-
-    // Arr.
-    'Failed to generate the XML.' =>
-        'No se pudo generar el XML.',
-    'Row {index} must have exactly 2 columns.' =>
-        'La fila {index} debe tener exactamente 2 columnas.',
-    'The value of "{key}" can not be written as XML text, {given} given.' =>
-        'El valor de "{key}" no se puede escribir como texto XML, se entregó {given}.',
-    'The first column of row {index} must be a scalar or null to be a key.' =>
-        'La primera columna de la fila {index} debe ser un escalar o null para ser una clave.',
-
     // Csv.
     'Failed to convert the CSV content from {encoding} to UTF-8.' =>
         'No se pudo convertir el contenido CSV de {encoding} a UTF-8.',
