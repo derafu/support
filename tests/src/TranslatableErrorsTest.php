@@ -14,10 +14,10 @@ namespace Derafu\TestsSupport;
 
 use ArrayObject;
 use Closure;
+use Derafu\File\Directory;
 use Derafu\Support\Csv;
 use Derafu\Support\Date;
 use Derafu\Support\Factory;
-use Derafu\Support\File;
 use Derafu\Support\Hydrator;
 use Derafu\Support\Str;
 use Derafu\Translation\Contract\TranslatableInterface;
@@ -36,7 +36,6 @@ use Throwable;
 #[CoversClass(Csv::class)]
 #[CoversClass(Date::class)]
 #[CoversClass(Factory::class)]
-#[CoversClass(File::class)]
 #[CoversClass(Hydrator::class)]
 #[CoversClass(Str::class)]
 final class TranslatableErrorsTest extends TestCase
@@ -49,14 +48,11 @@ final class TranslatableErrorsTest extends TestCase
         mkdir($this->directory);
 
         file_put_contents($this->directory . '/text.txt', 'hello');
-        File::zip($this->directory . '/text.txt', $this->directory . '/ok.zip');
-        mkdir($this->directory . '/out');
-        File::unzip($this->directory . '/ok.zip', $this->directory . '/out');
     }
 
     protected function tearDown(): void
     {
-        File::rmdir($this->directory);
+        Directory::remove($this->directory);
     }
 
     /**
@@ -64,8 +60,6 @@ final class TranslatableErrorsTest extends TestCase
      */
     private function cases(): array
     {
-        $dir = $this->directory;
-
         return [
             'Csv::read of a file that does not exist' => [
                 fn () => Csv::read('/no/such.csv'),
@@ -134,41 +128,6 @@ final class TranslatableErrorsTest extends TestCase
                 LogicException::class,
                 'Failed to create instance of NoSuchClass: Class "NoSuchClass" does not exist',
             ],
-            'File::compress of something that does not exist' => [
-                fn () => File::compress('/no/such', download: false),
-                RuntimeException::class,
-                'Cannot read source file or directory: /no/such',
-            ],
-            'File::zip of something that does not exist' => [
-                fn () => File::zip('/no/such', $dir . '/other.zip'),
-                RuntimeException::class,
-                "Failed to create ZIP file: The file with the path /no/such wasn't found.",
-            ],
-            'File::unzip of a file that does not exist' => [
-                fn () => File::unzip('/no/such.zip', $dir . '/x'),
-                RuntimeException::class,
-                'ZIP file does not exist: /no/such.zip',
-            ],
-            'File::unzip of a file that is not a ZIP' => [
-                fn () => File::unzip($dir . '/text.txt', $dir . '/x'),
-                RuntimeException::class,
-                'Failed to open ZIP file: ' . $dir . '/text.txt (Error code: 19)',
-            ],
-            'File::unzip over files that already exist' => [
-                fn () => File::unzip($dir . '/ok.zip', $dir . '/out'),
-                RuntimeException::class,
-                'File already exists: ' . $dir . '/out/text.txt',
-            ],
-            'File::send of a file that does not exist' => [
-                fn () => File::send('/no/such', sendHeaders: false),
-                RuntimeException::class,
-                'File does not exist: /no/such',
-            ],
-            'File::write where a directory can not be created' => [
-                fn () => File::write('/dev/null/x/y.txt', 'content'),
-                RuntimeException::class,
-                'Unable to create directory (/dev/null/x).',
-            ],
         ];
     }
 
@@ -186,28 +145,6 @@ final class TranslatableErrorsTest extends TestCase
             $this->assertInstanceOf(TranslatableInterface::class, $exception, $name);
             $this->assertSame($message, $exception->getMessage(), $name);
         }
-    }
-
-    public function testAnUnreadableFileIsATranslatableError(): void
-    {
-        if (function_exists('posix_geteuid') && posix_geteuid() === 0) {
-            $this->markTestSkipped('A file can always be read by root.');
-        }
-
-        $file = $this->directory . '/unreadable.txt';
-        file_put_contents($file, 'x');
-        chmod($file, 0000);
-
-        $exception = null;
-        try {
-            File::send($file, sendHeaders: false);
-        } catch (Throwable $e) {
-            $exception = $e;
-        }
-
-        $this->assertInstanceOf(RuntimeException::class, $exception);
-        $this->assertInstanceOf(TranslatableInterface::class, $exception);
-        $this->assertSame('Cannot read file: ' . $file, $exception->getMessage());
     }
 }
 

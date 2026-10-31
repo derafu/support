@@ -12,19 +12,17 @@ declare(strict_types=1);
 
 namespace Derafu\TestsSupport\Csv;
 
+use Derafu\File\Directory;
 use Derafu\Support\Csv;
-use Derafu\Support\File;
 use LogicException;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\RunInSeparateProcess;
 use PHPUnit\Framework\Attributes\Test;
-use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use RuntimeException;
 
 #[CoversClass(Csv::class)]
-#[UsesClass(File::class)]
 class CsvTest extends TestCase
 {
     private string $fixturesDir;
@@ -40,7 +38,7 @@ class CsvTest extends TestCase
 
     protected function tearDown(): void
     {
-        File::rmdir($this->tempDir);
+        Directory::remove($this->tempDir);
     }
 
     #[Test]

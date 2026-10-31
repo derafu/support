@@ -51,40 +51,6 @@ return [
     'Cannot convert the property "{property}" of {class}: it is readonly.' =>
         'No se puede convertir la propiedad "{property}" de {class}: es de solo lectura.',
 
-    // File.
-    'Unable to create directory ({directory}).' =>
-        'No se pudo crear el directorio ({directory}).',
-    'Unable to create temporary file in directory ({directory}).' =>
-        'No se pudo crear el archivo temporal en el directorio ({directory}).',
-    'Unable to write content to temporary file ({file}).' =>
-        'No se pudo escribir el contenido en el archivo temporal ({file}).',
-    'Unable to set permissions on temporary file ({file}).' =>
-        'No se pudieron establecer los permisos del archivo temporal ({file}).',
-    'Unable to move temporary file to target location ({file}).' =>
-        'No se pudo mover el archivo temporal a su ubicación de destino ({file}).',
-    'Failed to remove directory {directory}: {error}' =>
-        'No se pudo eliminar el directorio {directory}: {error}',
-    'Cannot read source file or directory: {source}' =>
-        'No se puede leer el archivo o directorio de origen: {source}',
-    'Cannot open destination file for writing: {destination}' =>
-        'No se puede abrir el archivo de destino para escribir: {destination}',
-    'Failed to create ZIP file: {error}' =>
-        'No se pudo crear el archivo ZIP: {error}',
-    'ZIP extension is not available' =>
-        'La extensión ZIP no está disponible',
-    'ZIP file does not exist: {file}' =>
-        'El archivo ZIP no existe: {file}',
-    'Failed to open ZIP file: {file} (Error code: {code})' =>
-        'No se pudo abrir el archivo ZIP: {file} (código de error: {code})',
-    'File already exists: {file}' =>
-        'El archivo ya existe: {file}',
-    'Failed to extract ZIP file to: {destination}' =>
-        'No se pudo extraer el archivo ZIP en: {destination}',
-    'File does not exist: {file}' =>
-        'El archivo no existe: {file}',
-    'Failed to send file: {file}' =>
-        'No se pudo enviar el archivo: {file}',
-
     // Ip.
     'The range "{range}" is not valid.' =>
         'El rango "{range}" no es válido.',

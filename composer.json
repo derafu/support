@@ -30,25 +30,18 @@
         "derafu/translation": "dev-main"
     },
     "require-dev": {
-        "ext-fileinfo": "*",
         "ext-xdebug": "*",
         "friendsofphp/php-cs-fixer": "^3.95",
         "phpstan/phpstan": "^2.2",
         "phpunit/phpunit": "^13.4",
         "league/csv": "^9.28",
         "nesbot/carbon": "^3.14",
-        "symfony/filesystem": "^8.1",
-        "symfony/mime": "^8.1",
-        "maennchen/zipstream-php": "^3.2",
-        "nikic/php-parser": "^5.9"
+        "nikic/php-parser": "^5.9",
+        "derafu/file": "dev-main"
     },
     "suggest": {
         "league/csv": "Required by Derafu\\Support\\Csv (read, write, generate and send CSV files). Version 9.27 or later.",
         "nesbot/carbon": "Required by Derafu\\Support\\Date (all its date and period helpers).",
-        "symfony/filesystem": "Required by Derafu\\Support\\File::rmdir() (recursive removal that does not follow symbolic links).",
-        "symfony/mime": "Required by Derafu\\Support\\File::mimetype() and File::mimetypesFromExtension() (MIME type detection and MIME types of an extension).",
-        "ext-fileinfo": "Required by Derafu\\Support\\File::mimetypeFromContent() (MIME type detection of a content in memory).",
-        "maennchen/zipstream-php": "Required by Derafu\\Support\\File::zip() (ZIP archives).",
         "nikic/php-parser": "Required by the tests of the messages of the package (Derafu\\Translation\\Lint reads the code)."
     },
     "scripts": {
