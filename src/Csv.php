@@ -36,7 +36,9 @@ final class Csv
      * @param string $enclosure Field enclosure character (default: ").
      * @param string $escape Escape character (default: \).
      * @param string $encoding Input encoding (default: UTF-8).
-     * @return array<int, array<array-key, mixed>> Array of CSV records.
+     * @return array<int, list<string>> The records, each one as the list of its
+     * fields. They are indexed by their position in the content: empty lines
+     * are skipped, so the indexes may have gaps.
      * @throws RuntimeException If CSV parsing fails.
      */
     public static function load(
@@ -58,7 +60,12 @@ final class Csv
             $csv->setEnclosure($enclosure);
             $csv->setEscape($escape);
 
-            return iterator_to_array($csv->getRecords());
+            $records = [];
+            foreach ($csv->getRecords() as $offset => $record) {
+                $records[(int) $offset] = array_values(array_map(strval(...), $record));
+            }
+
+            return $records;
         } catch (CsvException $e) {
             throw new RuntimeException(
                 ['Failed to parse CSV content: {error}', 'error' => $e->getMessage()],
@@ -76,7 +83,9 @@ final class Csv
      * @param string $enclosure Field enclosure character (default: ").
      * @param string $escape Escape character (default: \).
      * @param string $encoding Input encoding (default: UTF-8).
-     * @return array<int, array<array-key, mixed>> Array of CSV records.
+     * @return array<int, list<string>> The records, each one as the list of its
+     * fields. They are indexed by their position in the content: empty lines
+     * are skipped, so the indexes may have gaps.
      * @throws RuntimeException If file cannot be read or CSV parsing fails.
      */
     public static function read(

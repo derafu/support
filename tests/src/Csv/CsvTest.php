@@ -53,6 +53,39 @@ class CsvTest extends TestCase
         $this->assertSame('London', $result[2][2]);
     }
 
+    #[Test]
+    public function shouldKeepThePositionOfTheRecordsWhenThereAreEmptyLines(): void
+    {
+        $result = Csv::load("a;b\n\n1;2\n\n\n3;4\n");
+
+        $this->assertSame(
+            [0 => ['a', 'b'], 2 => ['1', '2'], 5 => ['3', '4']],
+            $result
+        );
+    }
+
+    #[Test]
+    public function shouldLoadEveryFieldAsString(): void
+    {
+        $result = Csv::load("a;;c\n;;\n\"\";x;\" \"\n");
+
+        $this->assertSame(
+            [['a', '', 'c'], ['', '', ''], ['', 'x', ' ']],
+            $result
+        );
+    }
+
+    #[Test]
+    public function shouldNotPadTheRecordsWithDifferentLength(): void
+    {
+        $result = Csv::load("a;b;c\n1;2\n1;2;3;4\n");
+
+        $this->assertSame(
+            [['a', 'b', 'c'], ['1', '2'], ['1', '2', '3', '4']],
+            $result
+        );
+    }
+
     /**
      * @param array<array-key, mixed> $expected
      */
