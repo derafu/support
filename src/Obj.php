@@ -107,7 +107,7 @@ final class Obj
      * Gets an array of all public property values.
      *
      * @param object $instance Object instance.
-     * @return array<string, mixed> Array of property values.
+     * @return array<int|string, mixed> Array of property values.
      */
     public static function getPublicValues(object $instance): array
     {

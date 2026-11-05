@@ -14,6 +14,7 @@ namespace Derafu\Support;
 
 use Derafu\Translation\Exception\Core\TranslatableLogicException as LogicException;
 use Derafu\Translation\Exception\Core\TranslatableRuntimeException as RuntimeException;
+use Derafu\Value\ValueCaster;
 use League\Csv\Exception as CsvException;
 use League\Csv\Reader;
 use League\Csv\Writer;
@@ -62,7 +63,10 @@ final class Csv
 
             $records = [];
             foreach ($csv->getRecords() as $offset => $record) {
-                $records[(int) $offset] = array_values(array_map(strval(...), $record));
+                $records[(int) $offset] = array_values(array_map(
+                    static fn (mixed $field): string => ValueCaster::toString($field) ?? '',
+                    $record
+                ));
             }
 
             return $records;
